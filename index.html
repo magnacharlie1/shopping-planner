@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Shopping Planner</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f4f4f5;
+    }
+
+    .app {
+      background: #ffffff;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      width: 100%;
+      max-width: 520px;
+    }
+
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: 1.4rem;
+      text-align: center;
+    }
+
+    .list-switcher {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .list-switcher select {
+      flex: 1;
+      min-width: 0;
+      padding: 0.35rem 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid #d4d4d8;
+      font-size: 0.9rem;
+      background: #fff;
+    }
+
+    .list-switcher button {
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.5rem;
+      border: none;
+      font-size: 0.8rem;
+      cursor: pointer;
+      background: #e5e7eb;
+      color: #111827;
+      white-space: nowrap;
+    }
+
+    .list-switcher button.primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .top-form {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 0.45rem 0.6rem;
+      border-radius: 0.5rem;
+      border: 1px solid #d4d4d8;
+      font-size: 0.95rem;
+    }
+
+    button {
+      padding: 0.45rem 0.8rem;
+      border-radius: 0.5rem;
+      border: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      white-space: nowrap;
+    }
+
+    .lists {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .list-section {
+      border-top: 1px solid #e4e4e7;
+      padding-top: 0.75rem;
+    }
+
+    .list-section:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .section {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f4f4f5;
+    }
+
+    .section:last-child {
+      border-bottom: none;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.3rem;
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .count {
+      font-size: 0.8rem;
+      color: #71717a;
+    }
+
+    .item-form {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .item-form input[type="text"] {
+      font-size: 0.9rem;
+      padding: 0.3rem 0.5rem;
+    }
+
+    .item-form button {
+      font-size: 0.8rem;
+      padding: 0.3rem 0.6rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .active-list {
+      min-height: 0.5rem;
+      padding: 0.1rem 0;
+    }
+
+    li {
+      padding: 0.35rem 0.25rem;
+      border-bottom: 1px solid #e4e4e7;
+    }
+
+    li:last-child {
+      border-bottom: none;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+
+    input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      cursor: pointer;
+    }
+
+    .item-text {
+      flex: 1;
+    }
+
+    .completed-item .item-text {
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    .section-tag {
+      font-size: 0.75rem;
+      padding: 0.05rem 0.35rem;
+      border-radius: 999px;
+      border: 1px solid #e4e4e7;
+      color: #52525b;
+      background: #fafafa;
+    }
+
+    /* Hide section tag in active lists; only show in Completed */
+    .section .section-tag {
+      display: none;
+    }
+
+    #completed-list .section-tag {
+      display: inline-block;
+    }
+
+    .empty {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #a1a1aa;
+      margin-top: 0.3rem;
+    }
+
+    .completed-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.3rem;
+    }
+
+    .completed-section-header h2 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    /* Drop hint area for empty sections */
+    .drop-area {
+      font-size: 0.8rem;
+      color: #6b7280;
+      border: 1px dashed #c4b5fd;
+      border-radius: 0.5rem;
+      padding: 0.35rem 0.5rem;
+      margin-bottom: 0.3rem;
+      text-align: center;
+      background: #f9fafb;
+    }
+
+    .drop-area.hidden {
+      display: none;
+    }
+
+    /* Drag & drop styling */
+    .item.dragging {
+      opacity: 0.5;
+    }
+
+    .active-list.drop-target,
+    .drop-area.drop-target {
+      background: #eef2ff;
+      border-color: #4f46e5;
+    }
+
+    /* Blue line showing where the item will be inserted */
+    .drop-indicator {
+      border-top: 2px solid #3b82f6;
+      margin: 0.1rem 0;
+      padding: 0;
+      height: 0;
+      list-style: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Shopping Planner</h1>
+
+    <!-- List selector / manager -->
+    <div class="list-switcher">
+      <select id="list-select"></select>
+      <button id="new-list-btn" type="button" class="primary">New list</button>
+      <button id="rename-list-btn" type="button">Rename</button>
+      <button id="delete-list-btn" type="button">Delete</button>
+    </div>
+
+    <!-- Add section (e.g. Monday, BBQ, Meal prep) -->
+    <form id="add-section-form" class="top-form">
+      <input
+        id="section-input"
+        type="text"
+        placeholder="Add section (e.g. Monday, BBQ)…"
+        autocomplete="off"
+      />
+      <button type="submit">Add section</button>
+    </form>
+
+    <div class="lists">
+      <!-- Sections with active items -->
+      <div class="list-section">
+        <div id="sections"></div>
+        <div id="empty-all-active" class="empty">
+          No items yet. Add a section to start.
+        </div>
+      </div>
+
+      <!-- Completed items -->
+      <div class="list-section">
+        <div class="completed-section-header">
+          <h2>Completed</h2>
+          <span id="completed-count" class="count"></span>
+        </div>
+        <ul id="completed-list"></ul>
+        <div id="empty-completed" class="empty">
+          Nothing completed yet
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM references
+    const sectionsContainer = document.getElementById("sections");
+    const addSectionFormEl = document.getElementById("add-section-form");
+    const sectionInputEl = document.getElementById("section-input");
+
+    const completedListEl = document.getElementById("completed-list");
+    const completedCountEl = document.getElementById("completed-count");
+    const emptyAllActiveEl = document.getElementById("empty-all-active");
+    const emptyCompletedEl = document.getElementById("empty-completed");
+
+    const listSelectEl = document.getElementById("list-select");
+    const newListBtn = document.getElementById("new-list-btn");
+    const renameListBtn = document.getElementById("rename-list-btn");
+    const deleteListBtn = document.getElementById("delete-list-btn");
+
+    // Drag & drop state
+    let sectionIdCounter = 1;
+    let draggedItem = null;
+    let dragTargetSection = null;
+    let dragAfterElement = null;
+
+    const dropIndicator = document.createElement("li");
+    dropIndicator.className = "drop-indicator";
+
+    // Persistence state
+    const STORAGE_KEY = "shoppingPlannerLists_v1";
+    let appState = null;
+    let isRestoring = false;
+
+    // ---------- Persistence helpers ----------
+
+    function saveAppState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error("Failed to save state:", e);
+      }
+    }
+
+    function serializeCurrentList() {
+      const sectionsData = [];
+      sectionsContainer.querySelectorAll(".section").forEach((sectionEl) => {
+        const sectionName = sectionEl.querySelector("h2").textContent;
+        const activeList = sectionEl.querySelector(".active-list");
+        const items = [];
+        if (activeList) {
+          activeList.querySelectorAll(".item").forEach((li) => {
+            const textEl = li.querySelector(".item-text");
+            if (textEl) {
+              items.push({ text: textEl.textContent });
+            }
+          });
+        }
+        sectionsData.push({ name: sectionName, items });
+      });
+
+      const completedData = [];
+      completedListEl.querySelectorAll(".item").forEach((li) => {
+        const textEl = li.querySelector(".item-text");
+        if (!textEl) return;
+        const sectionName = li.dataset.sectionName || "";
+        completedData.push({
+          text: textEl.textContent,
+          sectionName,
+        });
+      });
+
+      return {
+        sections: sectionsData,
+        completed: completedData,
+      };
+    }
+
+    function saveCurrentListState() {
+      if (!appState || !appState.currentListId) return;
+      const list = appState.lists[appState.currentListId];
+      if (!list) return;
+      list.data = serializeCurrentList();
+      saveAppState();
+    }
+
+    function refreshListSelect() {
+      if (!appState) return;
+      listSelectEl.innerHTML = "";
+      const ids = Object.keys(appState.lists);
+      ids.forEach((id) => {
+        const list = appState.lists[id];
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = list.name || "Untitled list";
+        listSelectEl.appendChild(opt);
+      });
+      if (appState.currentListId && appState.lists[appState.currentListId]) {
+        listSelectEl.value = appState.currentListId;
+      }
+    }
+
+    function renderList(listId) {
+      const list = appState.lists[listId];
+      isRestoring = true;
+
+      sectionsContainer.innerHTML = "";
+      completedListEl.innerHTML = "";
+
+      let data = list.data;
+      if (!data) {
+        data = {
+          sections: [{ name: "General", items: [] }],
+          completed: [],
+        };
+        list.data = data;
+      }
+
+      // Build sections & active items
+      data.sections.forEach((sectionData) => {
+        addSection(sectionData.name);
+        const sectionEls = sectionsContainer.querySelectorAll(".section");
+        const sectionEl = sectionEls[sectionEls.length - 1];
+        sectionData.items.forEach((item) => {
+          addItemToSection(sectionEl, item.text);
+        });
+      });
+
+      // Map section names -> current sectionIds
+      const sectionMap = new Map();
+      sectionsContainer.querySelectorAll(".section").forEach((sec) => {
+        const name = sec.querySelector("h2").textContent;
+        sectionMap.set(name, sec.dataset.sectionId);
+      });
+
+      // Build completed items
+      data.completed.forEach((cItem) => {
+        let sectionName = cItem.sectionName;
+        let sectionId = sectionMap.get(sectionName);
+
+        if (!sectionId) {
+          // Fallback if section no longer exists: use first section or create one
+          let targetSectionEl = sectionsContainer.querySelector(".section");
+          if (!targetSectionEl) {
+            addSection("General");
+            const secEls = sectionsContainer.querySelectorAll(".section");
+            targetSectionEl = secEls[secEls.length - 1];
+          }
+          sectionId = targetSectionEl.dataset.sectionId;
+          sectionName = targetSectionEl.querySelector("h2").textContent;
+          sectionMap.set(sectionName, sectionId);
+        }
+
+        const li = createItemElement(cItem.text, sectionName, sectionId);
+        li.classList.add("completed-item");
+        li.draggable = false;
+        const checkbox = li.querySelector(".item-checkbox");
+        if (checkbox) checkbox.checked = true;
+        completedListEl.appendChild(li);
+      });
+
+      updateCountsAndEmptyStates();
+      isRestoring = false;
+      refreshListSelect();
+    }
+
+    function initApp() {
+      // Load state
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          appState = JSON.parse(raw);
+        }
+      } catch (e) {
+        console.error("Failed to load state:", e);
+      }
+
+      if (!appState || !appState.lists) {
+        appState = { currentListId: null, lists: {} };
+      }
+
+      const ids = Object.keys(appState.lists);
+
+      if (ids.length === 0) {
+        const defaultId = "list-" + Date.now().toString(36);
+        appState.lists[defaultId] = {
+          id: defaultId,
+          name: "My list",
+          data: {
+            sections: [{ name: "General", items: [] }],
+            completed: [],
+          },
+        };
+        appState.currentListId = defaultId;
+        saveAppState();
+      } else if (!appState.currentListId || !appState.lists[appState.currentListId]) {
+        appState.currentListId = ids[0];
+      }
+
+      refreshListSelect();
+      renderList(appState.currentListId);
+
+      // List switcher events
+      listSelectEl.addEventListener("change", () => {
+        const newId = listSelectEl.value;
+        if (!newId || !appState.lists[newId]) return;
+        // Save current list first
+        saveCurrentListState();
+        appState.currentListId = newId;
+        saveAppState();
+        renderList(newId);
+      });
+
+      newListBtn.addEventListener("click", () => {
+        const nameInput = prompt("Name for new list:", "New list");
+        if (nameInput === null) return;
+        const name = nameInput.trim() || "Untitled list";
+        const id = "list-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+        appState.lists[id] = {
+          id,
+          name,
+          data: {
+            sections: [{ name: "General", items: [] }],
+            completed: [],
+          },
+        };
+        appState.currentListId = id;
+        saveAppState();
+        refreshListSelect();
+        renderList(id);
+      });
+
+      renameListBtn.addEventListener("click", () => {
+        if (!appState.currentListId) return;
+        const current = appState.lists[appState.currentListId];
+        if (!current) return;
+        const newNameInput = prompt("Rename list:", current.name || "Untitled list");
+        if (newNameInput === null) return;
+        const newName = newNameInput.trim();
+        if (!newName) return;
+        current.name = newName;
+        saveAppState();
+        refreshListSelect();
+      });
+
+      deleteListBtn.addEventListener("click", () => {
+        if (!appState.currentListId) return;
+        const current = appState.lists[appState.currentListId];
+        if (!current) return;
+        if (!confirm(`Delete list "${current.name}"? This cannot be undone.`)) return;
+
+        delete appState.lists[appState.currentListId];
+        const idsAfter = Object.keys(appState.lists);
+
+        if (idsAfter.length === 0) {
+          const id = "list-" + Date.now().toString(36);
+          appState.lists[id] = {
+            id,
+            name: "My list",
+            data: {
+              sections: [{ name: "General", items: [] }],
+              completed: [],
+            },
+          };
+          appState.currentListId = id;
+        } else {
+          appState.currentListId = idsAfter[0];
+        }
+
+        saveAppState();
+        refreshListSelect();
+        renderList(appState.currentListId);
+      });
+    }
+
+    // ---------- UI helpers (counts, empty states) ----------
+
+    function clearDropTargets() {
+      const lists = sectionsContainer.querySelectorAll(".active-list");
+      const dropAreas = sectionsContainer.querySelectorAll(".drop-area");
+      lists.forEach((list) => list.classList.remove("drop-target"));
+      dropAreas.forEach((area) => area.classList.remove("drop-target"));
+    }
+
+    function updateCountsAndEmptyStates() {
+      const sections = sectionsContainer.querySelectorAll(".section");
+      let totalActive = 0;
+
+      sections.forEach((section) => {
+        const activeList = section.querySelector(".active-list");
+        const dropArea = section.querySelector(".drop-area");
+        const countEl = section.querySelector("[data-role='active-count']");
+        const activeCount = activeList ? activeList.querySelectorAll(".item").length : 0;
+        totalActive += activeCount;
+
+        if (countEl) {
+          countEl.textContent = activeCount
+            ? `${activeCount} item${activeCount !== 1 ? "s" : ""}`
+            : "";
+        }
+
+        if (dropArea) {
+          dropArea.classList.toggle("hidden", activeCount > 0);
+        }
+      });
+
+      const completedCount = completedListEl.querySelectorAll(".item").length;
+      completedCountEl.textContent = completedCount
+        ? `${completedCount} item${completedCount !== 1 ? "s" : ""}`
+        : "";
+
+      emptyAllActiveEl.style.display = totalActive ? "none" : "block";
+      emptyCompletedEl.style.display = completedCount ? "none" : "block";
+
+      if (!isRestoring && appState) {
+        saveCurrentListState();
+      }
+    }
+
+    // ---------- Drag & drop helpers ----------
+
+    function getDragAfterElement(container, y) {
+      const draggableElements = [...container.querySelectorAll(".item:not(.dragging)")];
+
+      let closest = { offset: Number.NEGATIVE_INFINITY, element: null };
+
+      draggableElements.forEach((child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          closest = { offset, element: child };
+        }
+      });
+
+      return closest.element;
+    }
+
+    function finalizeDrop() {
+      if (!draggedItem || !dragTargetSection) return;
+
+      const activeList = dragTargetSection.querySelector(".active-list");
+      if (!activeList) return;
+
+      const sectionId = dragTargetSection.dataset.sectionId;
+      const sectionName = dragTargetSection.querySelector("h2").textContent;
+
+      if (dragAfterElement == null) {
+        activeList.appendChild(draggedItem);
+      } else {
+        activeList.insertBefore(draggedItem, dragAfterElement);
+      }
+
+      // Update metadata and tag
+      draggedItem.dataset.sectionId = sectionId;
+      draggedItem.dataset.sectionName = sectionName;
+      const tagSpan = draggedItem.querySelector(".section-tag");
+      if (tagSpan) {
+        tagSpan.textContent = `[${sectionName}]`;
+      }
+
+      if (dropIndicator.parentNode) {
+        dropIndicator.parentNode.removeChild(dropIndicator);
+      }
+      clearDropTargets();
+
+      dragTargetSection = null;
+      dragAfterElement = null;
+
+      updateCountsAndEmptyStates();
+    }
+
+    function setupDropZoneForSection(sectionEl) {
+      const activeList = sectionEl.querySelector(".active-list");
+      const dropArea = sectionEl.querySelector(".drop-area");
+
+      if (activeList) {
+        activeList.addEventListener("dragover", (event) => {
+          if (!draggedItem) return;
+          event.preventDefault();
+
+          clearDropTargets();
+          activeList.classList.add("drop-target");
+
+          dragTargetSection = sectionEl;
+          const afterElement = getDragAfterElement(activeList, event.clientY);
+          dragAfterElement = afterElement;
+
+          if (dropIndicator.parentNode && dropIndicator.parentNode !== activeList) {
+            dropIndicator.parentNode.removeChild(dropIndicator);
+          }
+
+          if (afterElement == null) {
+            activeList.appendChild(dropIndicator);
+          } else {
+            activeList.insertBefore(dropIndicator, afterElement);
+          }
+        });
+
+        activeList.addEventListener("dragleave", (event) => {
+          if (!draggedItem) return;
+          const related = event.relatedTarget;
+          if (!related || !activeList.contains(related)) {
+            activeList.classList.remove("drop-target");
+          }
+        });
+
+        activeList.addEventListener("drop", (event) => {
+          if (!draggedItem) return;
+          event.preventDefault();
+          finalizeDrop();
+        });
+      }
+
+      if (dropArea) {
+        dropArea.addEventListener("dragover", (event) => {
+          if (!draggedItem) return;
+          event.preventDefault();
+
+          clearDropTargets();
+          dropArea.classList.add("drop-target");
+
+          dragTargetSection = sectionEl;
+          dragAfterElement = null;
+
+          const al = sectionEl.querySelector(".active-list");
+          if (!al) return;
+
+          if (dropIndicator.parentNode && dropIndicator.parentNode !== al) {
+            dropIndicator.parentNode.removeChild(dropIndicator);
+          }
+          al.appendChild(dropIndicator);
+        });
+
+        dropArea.addEventListener("dragleave", (event) => {
+          if (!draggedItem) return;
+          const related = event.relatedTarget;
+          if (!related || !dropArea.contains(related)) {
+            dropArea.classList.remove("drop-target");
+          }
+        });
+
+        dropArea.addEventListener("drop", (event) => {
+          if (!draggedItem) return;
+          event.preventDefault();
+          finalizeDrop();
+        });
+      }
+    }
+
+    // ---------- Section & item creation ----------
+
+    function createSectionElement(name) {
+      const id = String(sectionIdCounter++);
+      const section = document.createElement("section");
+      section.className = "section";
+      section.dataset.sectionId = id;
+
+      section.innerHTML = `
+        <div class="section-header">
+          <h2>${name}</h2>
+          <span class="count" data-role="active-count"></span>
+        </div>
+        <form class="item-form">
+          <input
+            type="text"
+            class="item-input"
+            placeholder="Add item to ${name}…"
+            autocomplete="off"
+          />
+          <button type="submit">Add</button>
+        </form>
+        <div class="drop-area" data-role="drop-area">
+          Drop items here
+        </div>
+        <ul class="active-list"></ul>
+      `;
+
+      setupDropZoneForSection(section);
+      return section;
+    }
+
+    function addSection(name) {
+      if (!name) return;
+      const section = createSectionElement(name);
+      sectionsContainer.appendChild(section);
+      updateCountsAndEmptyStates();
+
+      const input = section.querySelector(".item-input");
+      if (input) input.focus();
+    }
+
+    function createItemElement(name, sectionName, sectionId) {
+      const li = document.createElement("li");
+      li.className = "item";
+      li.dataset.sectionId = sectionId || "";
+      li.dataset.sectionName = sectionName || "";
+
+      li.draggable = true;
+      li.addEventListener("dragstart", (event) => {
+        draggedItem = li;
+        li.classList.add("dragging");
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = "move";
+          event.dataTransfer.setData("text/plain", "");
+        }
+      });
+
+      li.addEventListener("dragend", () => {
+        li.classList.remove("dragging");
+        draggedItem = null;
+
+        if (dropIndicator.parentNode) {
+          dropIndicator.parentNode.removeChild(dropIndicator);
+        }
+        clearDropTargets();
+        dragTargetSection = null;
+        dragAfterElement = null;
+      });
+
+      const label = document.createElement("label");
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "item-checkbox";
+
+      const textSpan = document.createElement("span");
+      textSpan.className = "item-text";
+      textSpan.textContent = name;
+
+      const tagSpan = document.createElement("span");
+      tagSpan.className = "section-tag";
+      tagSpan.textContent = `[${sectionName}]`;
+
+      label.appendChild(checkbox);
+      label.appendChild(textSpan);
+      label.appendChild(tagSpan);
+      li.appendChild(label);
+
+      return li;
+    }
+
+    function addItemToSection(sectionEl, itemName) {
+      if (!itemName) return;
+      const activeList = sectionEl.querySelector(".active-list");
+      const sectionName = sectionEl.querySelector("h2").textContent;
+      const sectionId = sectionEl.dataset.sectionId;
+
+      const li = createItemElement(itemName, sectionName, sectionId);
+      activeList.appendChild(li);
+
+      updateCountsAndEmptyStates();
+    }
+
+    // ---------- Event wiring for sections/items ----------
+
+    // Add section form (top)
+    addSectionFormEl.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const value = sectionInputEl.value.trim();
+      if (!value) return;
+      addSection(value);
+      sectionInputEl.value = "";
+    });
+
+    // Adding items to specific sections (event delegation)
+    sectionsContainer.addEventListener("submit", (event) => {
+      const form = event.target.closest(".item-form");
+      if (!form) return;
+
+      event.preventDefault();
+      const input = form.querySelector(".item-input");
+      const value = input.value.trim();
+      if (!value) return;
+
+      const sectionEl = form.closest(".section");
+      if (!sectionEl) return;
+
+      addItemToSection(sectionEl, value);
+      input.value = "";
+      input.focus();
+    });
+
+    // Move from section active list -> Completed when checked
+    sectionsContainer.addEventListener("change", (event) => {
+      if (!event.target.matches(".item-checkbox")) return;
+      if (!event.target.checked) return;
+
+      const li = event.target.closest("li");
+      if (!li) return;
+
+      li.classList.add("completed-item");
+      li.draggable = false;
+      completedListEl.appendChild(li);
+
+      updateCountsAndEmptyStates();
+    });
+
+    // Move from Completed -> back to original section when UNchecked
+    completedListEl.addEventListener("change", (event) => {
+      if (!event.target.matches(".item-checkbox")) return;
+
+      const li = event.target.closest("li");
+      if (!li) return;
+
+      if (!event.target.checked) {
+        const sectionId = li.dataset.sectionId;
+        let sectionEl = sectionsContainer.querySelector(
+          `.section[data-section-id="${sectionId}"]`
+        );
+
+        if (!sectionEl) {
+          sectionEl = sectionsContainer.querySelector(".section");
+        }
+
+        if (sectionEl) {
+          li.classList.remove("completed-item");
+          const activeList = sectionEl.querySelector(".active-list");
+          activeList.appendChild(li);
+          li.draggable = true;
+          updateCountsAndEmptyStates();
+        }
+      }
+    });
+
+    // ---------- Kick things off ----------
+    initApp();
+  </script>
+</body>
+</html>
