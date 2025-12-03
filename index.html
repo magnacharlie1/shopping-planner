@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Shopping Planner</title>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -268,6 +269,12 @@
   </style>
 </head>
 <body>
+  <div id="auth-bar" style="display:flex; justify-content:flex-end; gap:0.5rem; margin:0.75rem;">
+    <span id="user-label" style="font-size:0.85rem; color:#4b5563;"></span>
+    <button id="login-btn" type="button">Log in</button>
+    <button id="logout-btn" type="button" style="display:none;">Log out</button>
+    <button id="test-api-btn" type="button" style="display:none;">Test API</button>
+  </div>  
   <div class="app">
     <h1>Shopping Planner</h1>
 
@@ -936,5 +943,146 @@
     // ---------- Kick things off ----------
     initApp();
   </script>
+  <script>
+    // === Auth0 + API wiring ===
+  
+    // 1. Fill these in from your Auth0 dashboard:
+    const AUTH0_DOMAIN = "dev-ep1kkf5cbz6dcdgn.us.auth0.com";          // e.g. "dev-abc123.eu.auth0.com"
+    const AUTH0_CLIENT_ID = "siGMrsujybw4rQaZEgZssLXYEVoPi7ADE";    // from your SPA application's settings
+    const AUTH0_AUDIENCE = "https://shopping-planner-api"; // the API Identifier you created
+  
+    let auth0Client = null;
+    let currentUser = null;
+  
+    function updateAuthBar() {
+      const userLabel = document.getElementById("user-label");
+      const loginBtn = document.getElementById("login-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+      const testApiBtn = document.getElementById("test-api-btn");
+  
+      if (!userLabel || !loginBtn || !logoutBtn || !testApiBtn) return;
+  
+      if (currentUser) {
+        userLabel.textContent = `Logged in as ${currentUser.email || "User"}`;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        testApiBtn.style.display = "inline-block";
+      } else {
+        userLabel.textContent = "";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        testApiBtn.style.display = "none";
+      }
+    }
+  
+    async function initAuth0() {
+      auth0Client = await createAuth0Client({
+        domain: AUTH0_DOMAIN,
+        clientId: AUTH0_CLIENT_ID,
+        authorizationParams: {
+          redirect_uri: window.location.origin,
+          audience: AUTH0_AUDIENCE
+        }
+      });
+  
+      // Handle Auth0 redirect back (after login)
+      if (window.location.search.includes("code=") &&
+          window.location.search.includes("state=")) {
+        try {
+          await auth0Client.handleRedirectCallback();
+        } catch (e) {
+          console.error("Error handling redirect callback:", e);
+        }
+        // Clean up the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+  
+      const isAuthenticated = await auth0Client.isAuthenticated();
+      if (isAuthenticated) {
+        currentUser = await auth0Client.getUser();
+      } else {
+        currentUser = null;
+      }
+  
+      updateAuthBar();
+    }
+  
+    async function getAuthToken() {
+      if (!auth0Client) return null;
+      const isAuthenticated = await auth0Client.isAuthenticated();
+      if (!isAuthenticated) return null;
+  
+      try {
+        const token = await auth0Client.getTokenSilently({
+          authorizationParams: {
+            audience: AUTH0_AUDIENCE
+          }
+        });
+        return token;
+      } catch (e) {
+        console.error("Error getting token silently:", e);
+        return null;
+      }
+    }
+  
+    async function testApiCall() {
+      const token = await getAuthToken();
+      if (!token) {
+        console.warn("No token available – are you logged in?");
+        alert("No token available – try logging in first.");
+        return;
+      }
+  
+      try {
+        const res = await fetch("/.netlify/functions/get-state", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+  
+        const text = await res.text();
+        console.log("get-state response:", res.status, text);
+  
+        alert("Check the browser console for get-state response.");
+      } catch (e) {
+        console.error("Error calling get-state:", e);
+        alert("Error calling API – see console.");
+      }
+    }
+  
+    function setupAuthUI() {
+      const loginBtn = document.getElementById("login-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+      const testApiBtn = document.getElementById("test-api-btn");
+  
+      if (!loginBtn || !logoutBtn || !testApiBtn) return;
+  
+      loginBtn.addEventListener("click", async () => {
+        // redirect to Auth0's hosted login page
+        await auth0Client.loginWithRedirect();
+      });
+  
+      logoutBtn.addEventListener("click", async () => {
+        await auth0Client.logout({
+          logoutParams: {
+            returnTo: window.location.origin
+          }
+        });
+      });
+  
+      testApiBtn.addEventListener("click", testApiCall);
+    }
+  
+    // Initialise Auth0 + wire buttons once the page is loaded
+    window.addEventListener("load", async () => {
+      try {
+        await initAuth0();
+        setupAuthUI();
+      } catch (e) {
+        console.error("Error initializing Auth0:", e);
+      }
+    });
+  </script>
+  
 </body>
 </html>
