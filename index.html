@@ -631,6 +631,8 @@
       if (!REMOTE_STORAGE_ENABLED) return;
       if (typeof getAuthToken !== "function") return;
 
+      console.log("Saving state to server…"); // debug line
+
       const token = await getAuthToken();
       if (!token) return;
 
