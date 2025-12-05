@@ -651,37 +651,39 @@
     }
 
     async function syncStateWithServerAfterLogin() {
-      // Only do anything if Auth0 is ready and user is logged in
       const token = await getAuthToken();
       if (!token) return;
 
       const remote = await loadAppStateFromServer();
+      console.log("Remote state from server:", remote);
 
-      if (remote) {
+      const hasValidRemote =
+        remote &&
+        typeof remote === "object" &&
+        remote.lists &&
+        Object.keys(remote.lists).length > 0;
+
+      if (hasValidRemote) {
         // Use cloud state
         appState = remote;
 
-        // Rebuild UI from appState
         // Clear current DOM
         sectionsContainer.innerHTML = "";
         completedListEl.innerHTML = "";
 
-        // Your existing logic that builds UI from appState:
-        // This is basically what your initApp() already does.
-        // A simple pattern if you used renderList/appState before:
-        const ids = Object.keys(appState.lists || {});
-        if (!appState.currentListId && ids.length > 0) {
+        const ids = Object.keys(appState.lists);
+        if (!appState.currentListId || !appState.lists[appState.currentListId]) {
           appState.currentListId = ids[0];
         }
 
         refreshListSelect();
         renderList(appState.currentListId);
-
       } else {
-        // No server state yet → push current local state up
+        // No usable server state yet → push current local state up
         await saveAppStateToServer();
       }
     }
+
 
 
     
@@ -1103,6 +1105,7 @@
         }
       } else {
         currentUser = null;
+        window.currentUser = null;
       }
   
       updateAuthBar();
