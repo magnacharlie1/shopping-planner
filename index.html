@@ -1093,6 +1093,8 @@
       const isAuthenticated = await auth0Client.isAuthenticated();
       if (isAuthenticated) {
         currentUser = await auth0Client.getUser();
+        // make it visible to the first script
+        window.currentUser = currentUser;
         // 🔵 NEW: sync appState with Neon now that we know who this is
         if (typeof syncStateWithServerAfterLogin === "function") {
           syncStateWithServerAfterLogin();
