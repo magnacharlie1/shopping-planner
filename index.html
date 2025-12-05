@@ -352,11 +352,22 @@
 
     // ---------- Persistence helpers ----------
 
-    function saveAppState() {
+    function saveAppStateToLocal() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       } catch (e) {
         console.error("Failed to save state:", e);
+      }
+    }
+
+    function saveAppState() {
+      // Always keep local copy
+      saveAppStateToLocal();
+
+      // If logged in, also push to server (fire-and-forget)
+      if (window.currentUser) {
+        // don’t await; we don’t need to block UI
+        saveAppStateToServer();
       }
     }
 
@@ -590,6 +601,88 @@
         renderList(appState.currentListId);
       });
     }
+
+    // Server data functions
+
+    const REMOTE_STORAGE_ENABLED = true; // just in case you ever want to toggle it
+
+    async function loadAppStateFromServer() {
+      if (!REMOTE_STORAGE_ENABLED) return null;
+      if (typeof getAuthToken !== "function") return null;
+
+      const token = await getAuthToken();
+      if (!token) return null;
+
+      const res = await fetch("/.netlify/functions/get-state", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        console.error("Failed to load state from server", await res.text());
+        return null;
+      }
+
+      return await res.json(); // either null or an appState object
+    }
+
+    async function saveAppStateToServer() {
+      if (!REMOTE_STORAGE_ENABLED) return;
+      if (typeof getAuthToken !== "function") return;
+
+      const token = await getAuthToken();
+      if (!token) return;
+
+      const res = await fetch("/.netlify/functions/save-state", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(appState),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to save state to server", await res.text());
+      }
+    }
+
+    async function syncStateWithServerAfterLogin() {
+      // Only do anything if Auth0 is ready and user is logged in
+      const token = await getAuthToken();
+      if (!token) return;
+
+      const remote = await loadAppStateFromServer();
+
+      if (remote) {
+        // Use cloud state
+        appState = remote;
+
+        // Rebuild UI from appState
+        // Clear current DOM
+        sectionsContainer.innerHTML = "";
+        completedListEl.innerHTML = "";
+
+        // Your existing logic that builds UI from appState:
+        // This is basically what your initApp() already does.
+        // A simple pattern if you used renderList/appState before:
+        const ids = Object.keys(appState.lists || {});
+        if (!appState.currentListId && ids.length > 0) {
+          appState.currentListId = ids[0];
+        }
+
+        refreshListSelect();
+        renderList(appState.currentListId);
+
+      } else {
+        // No server state yet → push current local state up
+        await saveAppStateToServer();
+      }
+    }
+
+
+    
 
     // ---------- UI helpers (counts, empty states) ----------
 
@@ -1000,6 +1093,10 @@
       const isAuthenticated = await auth0Client.isAuthenticated();
       if (isAuthenticated) {
         currentUser = await auth0Client.getUser();
+        // 🔵 NEW: sync appState with Neon now that we know who this is
+        if (typeof syncStateWithServerAfterLogin === "function") {
+          syncStateWithServerAfterLogin();
+        }
       } else {
         currentUser = null;
       }
