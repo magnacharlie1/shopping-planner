@@ -30,7 +30,7 @@
     }
 
     h1 {
-      margin: 0 0 0.75rem;
+      margin: 0 0 0.5rem;
       font-size: 1.4rem;
       text-align: center;
     }
@@ -57,6 +57,34 @@
       border-radius: 999px;
       border: none;
       cursor: pointer;
+    }
+
+    /* Mode toggle (Shopping / Menu) */
+    .mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin: 0 0 0.75rem;
+      padding: 0.2rem;
+      border-radius: 999px;
+      background: #f4f4f5;
+    }
+
+    .mode-btn {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      font-size: 0.85rem;
+      padding: 0.25rem 0.6rem;
+      cursor: pointer;
+      color: #4b5563;
+    }
+
+    .mode-btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
     .list-switcher {
@@ -292,6 +320,23 @@
       list-style: none;
     }
 
+    /* Menu mode: hide editing + Completed section */
+    .app.mode-menu #completed-section {
+      display: none;
+    }
+
+    .app.mode-menu #add-section-form {
+      display: none;
+    }
+
+    .app.mode-menu .item-form {
+      display: none;
+    }
+
+    .app.mode-menu .drop-area {
+      display: none;
+    }
+
     /* ---------- Mobile tweaks ---------- */
     @media (max-width: 640px) {
       body {
@@ -317,6 +362,10 @@
       .auth-bar {
         justify-content: center;
         flex-wrap: wrap;
+      }
+
+      .mode-toggle {
+        margin-bottom: 0.5rem;
       }
 
       .list-switcher {
@@ -372,6 +421,12 @@
 
     <h1>Shopping Planner</h1>
 
+    <!-- Mode toggle -->
+    <div id="mode-toggle" class="mode-toggle">
+      <button type="button" class="mode-btn active" data-mode="shopping">Shopping</button>
+      <button type="button" class="mode-btn" data-mode="menu">Menu</button>
+    </div>
+
     <!-- List selector / manager -->
     <div class="list-switcher">
       <select id="list-select"></select>
@@ -401,7 +456,7 @@
       </div>
 
       <!-- Completed items -->
-      <div class="list-section">
+      <div id="completed-section" class="list-section">
         <div class="completed-section-header">
           <h2>Completed</h2>
           <span id="completed-count" class="count"></span>
@@ -430,6 +485,10 @@
     const renameListBtn = document.getElementById("rename-list-btn");
     const deleteListBtn = document.getElementById("delete-list-btn");
 
+    const appEl = document.querySelector(".app");
+    const modeToggleEl = document.getElementById("mode-toggle");
+    let currentMode = "shopping";
+
     // Drag & drop state
     let sectionIdCounter = 1;
     let draggedItem = null;
@@ -443,6 +502,36 @@
     const STORAGE_KEY = "shoppingPlannerLists_v1";
     let appState = null;
     let isRestoring = false;
+
+    // ---------- Mode toggle ----------
+
+    if (modeToggleEl) {
+      modeToggleEl.addEventListener("click", (event) => {
+        const btn = event.target.closest(".mode-btn");
+        if (!btn) return;
+        const newMode = btn.dataset.mode;
+        if (!newMode || newMode === currentMode) return;
+
+        // If leaving shopping mode, save state first
+        if (currentMode === "shopping") {
+          saveCurrentListState();
+        }
+
+        currentMode = newMode;
+
+        document.querySelectorAll(".mode-btn").forEach((b) => {
+          b.classList.toggle("active", b.dataset.mode === currentMode);
+        });
+
+        if (appEl) {
+          appEl.classList.toggle("mode-menu", currentMode === "menu");
+        }
+
+        if (appState && appState.currentListId) {
+          renderList(appState.currentListId);
+        }
+      });
+    }
 
     // ---------- Persistence helpers ----------
 
@@ -523,7 +612,9 @@
       }
     }
 
-    function renderList(listId) {
+    // ---------- Rendering (shopping vs menu) ----------
+
+    function renderShoppingList(listId) {
       const list = appState.lists[listId];
       isRestoring = true;
 
@@ -584,7 +675,83 @@
 
       updateCountsAndEmptyStates();
       isRestoring = false;
-      refreshListSelect();
+    }
+
+    // Menu view: no checkboxes, no Completed section, all items in their sections
+    function renderMenuView(listId) {
+      const list = appState.lists[listId];
+      isRestoring = true;
+
+      sectionsContainer.innerHTML = "";
+      completedListEl.innerHTML = "";
+
+      let data = list.data;
+      if (!data) {
+        data = {
+          sections: [{ name: "General", items: [] }],
+          completed: [],
+        };
+        list.data = data;
+      }
+
+      const sectionMap = new Map();
+
+      // Create sections for all known section names
+      data.sections.forEach((sectionData) => {
+        const sectionEl = createSectionElement(sectionData.name);
+        sectionsContainer.appendChild(sectionEl);
+        sectionMap.set(sectionData.name, sectionEl);
+      });
+
+      function ensureSection(name) {
+        let sectionEl = sectionMap.get(name);
+        if (!sectionEl) {
+          sectionEl = createSectionElement(name);
+          sectionsContainer.appendChild(sectionEl);
+          sectionMap.set(name, sectionEl);
+        }
+        return sectionEl;
+      }
+
+      // Add active items
+      data.sections.forEach((sectionData) => {
+        const sectionEl = ensureSection(sectionData.name);
+        const activeList = sectionEl.querySelector(".active-list");
+        sectionData.items.forEach((item) => {
+          const li = document.createElement("li");
+          li.className = "item";
+          const textSpan = document.createElement("span");
+          textSpan.className = "item-text";
+          textSpan.textContent = item.text;
+          li.appendChild(textSpan);
+          activeList.appendChild(li);
+        });
+      });
+
+      // Add completed items into their sections (no checkboxes, no strike-through)
+      (data.completed || []).forEach((cItem) => {
+        const sectionName = cItem.sectionName || "General";
+        const sectionEl = ensureSection(sectionName);
+        const activeList = sectionEl.querySelector(".active-list");
+        const li = document.createElement("li");
+        li.className = "item";
+        const textSpan = document.createElement("span");
+        textSpan.className = "item-text";
+        textSpan.textContent = cItem.text;
+        li.appendChild(textSpan);
+        activeList.appendChild(li);
+      });
+
+      updateCountsAndEmptyStates();
+      isRestoring = false;
+    }
+
+    function renderList(listId) {
+      if (currentMode === "menu") {
+        renderMenuView(listId);
+      } else {
+        renderShoppingList(listId);
+      }
     }
 
     function initApp() {
@@ -627,8 +794,10 @@
       listSelectEl.addEventListener("change", () => {
         const newId = listSelectEl.value;
         if (!newId || !appState.lists[newId]) return;
-        // Save current list first
-        saveCurrentListState();
+        // Save current list first (only meaningful in shopping mode)
+        if (currentMode === "shopping") {
+          saveCurrentListState();
+        }
         appState.currentListId = newId;
         saveAppState();
         renderList(newId);
@@ -817,7 +986,8 @@
       emptyAllActiveEl.style.display = totalActive ? "none" : "block";
       emptyCompletedEl.style.display = completedCount ? "none" : "block";
 
-      if (!isRestoring && appState) {
+      // Only persist when in shopping mode
+      if (!isRestoring && appState && currentMode === "shopping") {
         saveCurrentListState();
       }
     }
@@ -1130,6 +1300,7 @@
     // ---------- Kick things off ----------
     initApp();
   </script>
+
   <script>
     // === Auth0 + API wiring ===
   
@@ -1189,7 +1360,7 @@
         currentUser = await auth0Client.getUser();
         // make it visible to the first script
         window.currentUser = currentUser;
-        // 🔵 NEW: sync appState with Neon now that we know who this is
+        // sync appState with Neon now that we know who this is
         if (typeof syncStateWithServerAfterLogin === "function") {
           syncStateWithServerAfterLogin();
         }
