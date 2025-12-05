@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Shopping Planner</title>
   <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
   <style>
@@ -265,6 +266,69 @@
       padding: 0;
       height: 0;
       list-style: none;
+    }
+
+    /* ---------- Mobile tweaks ---------- */
+    @media (max-width: 640px) {
+      body {
+        align-items: stretch;
+        justify-content: flex-start;
+        background: #ffffff;
+      }
+
+      .app {
+        max-width: 100%;
+        width: 100%;
+        min-height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 1rem 0.75rem 1.5rem;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .list-switcher {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .list-switcher select {
+        width: 100%;
+      }
+
+      .list-switcher button {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .top-form {
+        flex-direction: column;
+      }
+
+      .top-form input[type="text"],
+      .top-form button {
+        width: 100%;
+      }
+
+      label {
+        font-size: 1rem;
+      }
+
+      button {
+        padding: 0.55rem 0.8rem;
+      }
+
+      input[type="checkbox"] {
+        width: 1.1rem;
+        height: 1.1rem;
+      }
+
+      .lists {
+        gap: 1rem;
+      }
     }
   </style>
 </head>
@@ -683,10 +747,6 @@
         await saveAppStateToServer();
       }
     }
-
-
-
-    
 
     // ---------- UI helpers (counts, empty states) ----------
 
