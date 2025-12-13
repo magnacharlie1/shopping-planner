@@ -305,16 +305,36 @@
       display: flex;
       gap: 0.45rem;
       margin-bottom: 0.4rem;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
-    .item-form input[type="text"] {
+    .item-form input[type="text"],
+    .item-form input[type="number"] {
       font-size: 0.95rem;
       padding: 0.35rem 0.55rem;
     }
 
     .item-form button {
       font-size: 0.85rem;
-      padding: 0.35rem 0.65rem;
+      padding: 0.35rem 0.8rem;
+    }
+
+    .item-amount-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .item-amount-row input[type="number"] {
+      width: 90px;
+    }
+
+    .item-amount-row input[type="text"] {
+      min-width: 120px;
+      flex: 1;
     }
 
     ul {
@@ -362,20 +382,32 @@
     .item-actions {
       display: flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.5rem;
     }
 
     .item-action-btn {
-      background: #f3f4f6;
+      background: #f8fafc;
       color: #0f172a;
       border: 1px solid #e5e7eb;
-      padding: 0.3rem 0.55rem;
+      padding: 0.32rem 0.42rem;
       font-size: 0.8rem;
-      border-radius: 10px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+    }
+
+    .item-action-btn svg {
+      width: 16px;
+      height: 16px;
     }
 
     .item-action-btn:hover {
-      background: #e5e7eb;
+      background: #eef2ff;
+      border-color: #cbd5e1;
     }
 
     li:last-child {
@@ -415,6 +447,17 @@
       border: 1px solid #e4e4e7;
       color: #334155;
       background: #f8fafc;
+    }
+
+    .item-amount {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.14rem 0.5rem;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #1f2937;
+      font-size: 0.85rem;
     }
 
     /* Hide section tag in active lists; only show in Completed */
@@ -782,6 +825,10 @@
     }
 
     .app.mode-menu .item-form {
+      display: none;
+    }
+
+    .app.mode-menu .suggestion-bar {
       display: none;
     }
 
@@ -1240,7 +1287,11 @@
           activeList.querySelectorAll(".item").forEach((li) => {
             const textEl = li.querySelector(".item-text");
             if (textEl) {
-              items.push({ text: textEl.textContent });
+              items.push({
+                text: textEl.textContent,
+                quantity: li.dataset.quantity || "",
+                unit: li.dataset.unit || "",
+              });
             }
           });
         }
@@ -1256,6 +1307,8 @@
         completedData.push({
           text: textEl.textContent,
           sectionName,
+          quantity: li.dataset.quantity || "",
+          unit: li.dataset.unit || "",
         });
       });
 
@@ -1313,7 +1366,7 @@
         const sectionEls = sectionsContainer.querySelectorAll(".section");
         const sectionEl = sectionEls[sectionEls.length - 1];
         sectionData.items.forEach((item) => {
-          addItemToSection(sectionEl, item.text);
+          addItemToSection(sectionEl, item.text, item.quantity, item.unit);
         });
       });
 
@@ -1342,7 +1395,7 @@
           sectionMap.set(sectionName, sectionId);
         }
 
-        const li = createItemElement(cItem.text, sectionName, sectionId);
+        const li = createItemElement(cItem.text, sectionName, sectionId, cItem.quantity, cItem.unit);
         li.classList.add("completed-item");
         li.draggable = false;
         const checkbox = li.querySelector(".item-checkbox");
@@ -1398,10 +1451,28 @@
         sectionData.items.forEach((item) => {
           const li = document.createElement("li");
           li.className = "item";
+          const row = document.createElement("div");
+          row.className = "item-row";
+          const textWrapper = document.createElement("div");
+          textWrapper.style.display = "flex";
+          textWrapper.style.flexDirection = "column";
+          textWrapper.style.gap = "4px";
+
           const textSpan = document.createElement("span");
           textSpan.className = "item-text";
           textSpan.textContent = item.text;
-          li.appendChild(textSpan);
+
+          const amountText = formatAmount(item.quantity, item.unit);
+          if (amountText) {
+            const amountBadge = document.createElement("span");
+            amountBadge.className = "item-amount";
+            amountBadge.textContent = amountText;
+            textWrapper.appendChild(amountBadge);
+          }
+
+          textWrapper.appendChild(textSpan);
+          row.appendChild(textWrapper);
+          li.appendChild(row);
           activeList.appendChild(li);
         });
       });
@@ -1413,10 +1484,28 @@
         const activeList = sectionEl.querySelector(".active-list");
         const li = document.createElement("li");
         li.className = "item";
+        const row = document.createElement("div");
+        row.className = "item-row";
+        const textWrapper = document.createElement("div");
+        textWrapper.style.display = "flex";
+        textWrapper.style.flexDirection = "column";
+        textWrapper.style.gap = "4px";
+
         const textSpan = document.createElement("span");
         textSpan.className = "item-text";
         textSpan.textContent = cItem.text;
-        li.appendChild(textSpan);
+
+        const amountText = formatAmount(cItem.quantity, cItem.unit);
+        if (amountText) {
+          const amountBadge = document.createElement("span");
+          amountBadge.className = "item-amount";
+          amountBadge.textContent = amountText;
+          textWrapper.appendChild(amountBadge);
+        }
+
+        textWrapper.appendChild(textSpan);
+        row.appendChild(textWrapper);
+        li.appendChild(row);
         activeList.appendChild(li);
       });
 
@@ -2119,6 +2208,10 @@
               placeholder="Add item to ${name}…"
               autocomplete="off"
             />
+            <div class="item-amount-row">
+              <input type="number" class="item-qty-input" placeholder="Qty" min="0" step="0.1" />
+              <input type="text" class="item-unit-input" placeholder="Unit" autocomplete="off" />
+            </div>
             <button type="submit">Add</button>
           </form>
           <div class="drop-area" data-role="drop-area">
@@ -2253,6 +2346,7 @@
     }
 
     function renderSectionSuggestions(sectionEl, sectionName) {
+      if (currentMode === "menu") return;
       const bar = sectionEl.querySelector("[data-role='suggestion-bar']");
       if (!bar) return;
 
@@ -2291,9 +2385,12 @@
         addAll.className = "suggestion-chip primary";
         addAll.textContent = "Add all";
         addAll.addEventListener("click", () => {
-          suggestions.slice(0, maxSuggestions).forEach((sugg) => {
-            addItemToSection(sectionEl, sugg);
-          });
+          const itemsToAdd = suggestions.slice(0, maxSuggestions).map((sugg) => ({
+            name: sugg,
+            quantity: "",
+            unit: "",
+          }));
+          addItemsToSection(sectionEl, itemsToAdd);
           bar.hidden = true;
         });
         bar.appendChild(addAll);
@@ -2333,6 +2430,10 @@
       sectionsContainer.appendChild(section);
       updateCountsAndEmptyStates();
 
+      requestAnimationFrame(() => {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+
       const input = section.querySelector(".item-input");
       if (input) input.focus();
 
@@ -2341,11 +2442,20 @@
       }
     }
 
-    function createItemElement(name, sectionName, sectionId) {
+    function formatAmount(quantity, unit) {
+      const qty = (quantity || "").toString().trim();
+      const cleanedUnit = (unit || "").trim();
+      if (!qty && !cleanedUnit) return "";
+      return `${qty}${qty && cleanedUnit ? " " : ""}${cleanedUnit}`;
+    }
+
+    function createItemElement(name, sectionName, sectionId, quantity = "", unit = "") {
       const li = document.createElement("li");
       li.className = "item";
       li.dataset.sectionId = sectionId || "";
       li.dataset.sectionName = sectionName || "";
+      li.dataset.quantity = quantity || "";
+      li.dataset.unit = unit || "";
 
       li.draggable = true;
       li.addEventListener("dragstart", (event) => {
@@ -2367,16 +2477,31 @@
       checkbox.type = "checkbox";
       checkbox.className = "item-checkbox";
 
+      const textWrapper = document.createElement("div");
+      textWrapper.style.display = "flex";
+      textWrapper.style.flexDirection = "column";
+      textWrapper.style.gap = "4px";
+
       const textSpan = document.createElement("span");
       textSpan.className = "item-text";
       textSpan.textContent = name;
+
+      const amountText = formatAmount(quantity, unit);
+      if (amountText) {
+        const amountBadge = document.createElement("span");
+        amountBadge.className = "item-amount";
+        amountBadge.textContent = amountText;
+        textWrapper.appendChild(amountBadge);
+      }
+
+      textWrapper.appendChild(textSpan);
 
       const tagSpan = document.createElement("span");
       tagSpan.className = "section-tag";
       tagSpan.textContent = `[${sectionName}]`;
 
       label.appendChild(checkbox);
-      label.appendChild(textSpan);
+      label.appendChild(textWrapper);
       label.appendChild(tagSpan);
 
       const row = document.createElement("div");
@@ -2411,13 +2536,28 @@
       editBtn.type = "button";
       editBtn.className = "item-action-btn";
       editBtn.dataset.itemAction = "edit";
-      editBtn.textContent = "Edit";
+      editBtn.setAttribute("aria-label", "Edit item");
+      editBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+        </svg>
+      `;
 
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "item-action-btn";
       deleteBtn.dataset.itemAction = "delete";
-      deleteBtn.textContent = "Delete";
+      deleteBtn.setAttribute("aria-label", "Delete item");
+      deleteBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18" />
+          <path d="M8 6v14c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V6" />
+          <path d="M10 11v6" />
+          <path d="M14 11v6" />
+          <path d="M10 6V4c0-.55.45-1 1-1h2c.55 0 1 .45 1 1v2" />
+        </svg>
+      `;
 
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
@@ -2427,14 +2567,30 @@
       return li;
     }
 
-    function addItemToSection(sectionEl, itemName) {
-      if (!itemName) return;
+    function addItemsToSection(sectionEl, items = []) {
+      if (!sectionEl || !items.length) return;
       const activeList = sectionEl.querySelector(".active-list");
+      if (!activeList) return;
       const sectionName = sectionEl.querySelector("h2").textContent;
       const sectionId = sectionEl.dataset.sectionId;
+      const fragment = document.createDocumentFragment();
 
-      const li = createItemElement(itemName, sectionName, sectionId);
-      activeList.appendChild(li);
+      items.forEach((entry) => {
+        const normalized =
+          typeof entry === "string"
+            ? { name: entry, quantity: "", unit: "" }
+            : entry;
+        const li = createItemElement(
+          normalized.name || normalized.text || "",
+          sectionName,
+          sectionId,
+          normalized.quantity || "",
+          normalized.unit || ""
+        );
+        fragment.appendChild(li);
+      });
+
+      activeList.appendChild(fragment);
 
       const bar = sectionEl.querySelector("[data-role='suggestion-bar']");
       if (bar) {
@@ -2442,6 +2598,11 @@
       }
 
       updateCountsAndEmptyStates();
+    }
+
+    function addItemToSection(sectionEl, itemName, quantity = "", unit = "") {
+      if (!itemName) return;
+      addItemsToSection(sectionEl, [{ name: itemName, quantity, unit }]);
     }
 
     // ---------- Sundry helpers ----------
@@ -2689,7 +2850,30 @@
         if (nextValue === null) return;
         const trimmed = nextValue.trim();
         if (!trimmed || !textSpan) return;
+
+        const nextQty = prompt("Amount (number)", li.dataset.quantity || "");
+        if (nextQty === null) return;
+        const nextUnit = prompt("Unit", li.dataset.unit || "");
+        if (nextUnit === null) return;
+
+        li.dataset.quantity = nextQty.trim();
+        li.dataset.unit = nextUnit.trim();
         textSpan.textContent = trimmed;
+
+        const existingBadge = li.querySelector(".item-amount");
+        const amountText = formatAmount(li.dataset.quantity, li.dataset.unit);
+        if (amountText) {
+          if (existingBadge) {
+            existingBadge.textContent = amountText;
+          } else {
+            const badge = document.createElement("span");
+            badge.className = "item-amount";
+            badge.textContent = amountText;
+            textSpan.parentElement?.insertBefore(badge, textSpan.parentElement.firstChild);
+          }
+        } else if (existingBadge) {
+          existingBadge.remove();
+        }
       }
 
       if (action === "delete") {
@@ -2718,14 +2902,18 @@
 
       event.preventDefault();
       const input = form.querySelector(".item-input");
+      const qtyInput = form.querySelector(".item-qty-input");
+      const unitInput = form.querySelector(".item-unit-input");
       const value = input.value.trim();
       if (!value) return;
 
       const sectionEl = form.closest(".section");
       if (!sectionEl) return;
 
-      addItemToSection(sectionEl, value);
+      addItemToSection(sectionEl, value, qtyInput?.value.trim(), unitInput?.value.trim());
       input.value = "";
+      if (qtyInput) qtyInput.value = "";
+      if (unitInput) unitInput.value = "";
       input.focus();
     });
 
