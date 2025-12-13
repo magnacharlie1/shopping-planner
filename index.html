@@ -274,6 +274,25 @@
       transform: scale(0.995);
     }
 
+    .item-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .item-action-btn {
+      background: #f3f4f6;
+      color: #0f172a;
+      border: 1px solid #e5e7eb;
+      padding: 0.3rem 0.55rem;
+      font-size: 0.8rem;
+      border-radius: 10px;
+    }
+
+    .item-action-btn:hover {
+      background: #e5e7eb;
+    }
+
     li:last-child {
       border-bottom: none;
     }
@@ -468,6 +487,65 @@
       border: 1px solid #e5e7eb;
     }
 
+    .meal-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      max-height: 55vh;
+      overflow: auto;
+      padding-right: 0.15rem;
+    }
+
+    .meal-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 0.75rem 0.85rem;
+      background: #f8fafc;
+    }
+
+    .meal-card h4 {
+      margin: 0;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .ingredient-list {
+      list-style: disc;
+      padding-left: 1.2rem;
+      margin: 0.4rem 0 0.5rem;
+      color: #111827;
+    }
+
+    .ingredient-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      border: none;
+      padding: 0.15rem 0;
+    }
+
+    .ingredient-actions {
+      display: inline-flex;
+      gap: 0.35rem;
+    }
+
+    .subtle-input {
+      width: 100%;
+      padding: 0.45rem 0.6rem;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+    }
+
+    .dual-actions {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      margin-top: 0.4rem;
+    }
+
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -481,6 +559,70 @@
 
     .modal-backdrop.active {
       display: flex;
+    }
+
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: none;
+      z-index: 18;
+    }
+
+    .drawer-backdrop.active {
+      display: block;
+    }
+
+    .side-drawer {
+      position: fixed;
+      top: 0;
+      right: -320px;
+      width: 300px;
+      height: 100vh;
+      background: #fff;
+      box-shadow: -12px 0 40px rgba(15, 23, 42, 0.18);
+      padding: 1.1rem 1.25rem 1.6rem;
+      border-left: 1px solid #e2e8f0;
+      transition: right 180ms ease;
+      z-index: 19;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .side-drawer.open {
+      right: 0;
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .drawer-section h4 {
+      margin: 0 0 0.35rem;
+      font-size: 0.95rem;
+      color: #1f2937;
+    }
+
+    .drawer-links {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .drawer-links button {
+      width: 100%;
+      justify-content: flex-start;
+      background: #f8fafc;
+      color: #0f172a;
+      border: 1px solid #e5e7eb;
+    }
+
+    .drawer-links button:hover {
+      background: #e5e7eb;
     }
 
     .modal {
@@ -675,7 +817,8 @@
 
     <div class="sundry-actions">
       <button id="sundry-btn" type="button" class="ghost-btn">Sundry reminders</button>
-      <button id="settings-btn" type="button" class="ghost-btn">Sundry settings</button>
+      <button id="saved-meals-btn" type="button" class="ghost-btn">Saved meals</button>
+      <button id="settings-btn" type="button" class="ghost-btn">Settings</button>
     </div>
 
     <!-- Add section (e.g. Monday, BBQ, Meal prep) -->
@@ -749,6 +892,63 @@
     </div>
   </div>
 
+  <div id="meals-modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="meals-modal-title">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.6rem;">
+        <div>
+          <h3 id="meals-modal-title">Saved meals</h3>
+          <p>Review your meal suggestions and tweak the ingredients before dropping them into a list.</p>
+        </div>
+        <button id="close-meals-modal" type="button" class="ghost-btn" aria-label="Close meals menu">Close</button>
+      </div>
+
+      <div class="modal-section">
+        <h4 style="margin:0 0 0.35rem;">Add a meal</h4>
+        <form id="add-meal-form" style="display:flex; gap:0.5rem; margin-bottom:0.65rem;">
+          <input id="new-meal-input" type="text" placeholder="Meal name" autocomplete="off" class="subtle-input" style="flex:1;">
+          <button type="submit">Save meal</button>
+        </form>
+        <div class="dual-actions">
+          <span style="color:#6b7280; font-size:0.92rem;">Tap into a meal to edit its ingredients.</span>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h4 style="margin:0 0 0.35rem;">Meals</h4>
+        <div id="meals-list" class="meal-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="drawer-backdrop" class="drawer-backdrop"></div>
+  <aside id="settings-drawer" class="side-drawer" aria-label="Settings drawer">
+    <div class="drawer-header">
+      <div>
+        <h3 style="margin:0;">Quick settings</h3>
+        <p style="margin:0.25rem 0 0; color:#6b7280;">Jump to the pop-ups you need without hunting for buttons.</p>
+      </div>
+      <button id="close-settings-drawer" type="button" class="ghost-btn">Close</button>
+    </div>
+
+    <div class="drawer-section">
+      <h4>Pop-ups</h4>
+      <div class="drawer-links">
+        <button id="drawer-sundry-btn" type="button">Sundry reminders</button>
+        <button id="drawer-meals-btn" type="button">Saved meals</button>
+        <button id="drawer-recipes-btn" type="button">Recipe settings</button>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <h4>Account</h4>
+      <div class="drawer-links">
+        <button id="drawer-login-btn" type="button">Log in</button>
+        <button id="drawer-logout-btn" type="button">Log out</button>
+        <button id="drawer-test-api-btn" type="button">Test API</button>
+      </div>
+    </div>
+  </aside>
+
   <script>
     // DOM references
     const sectionsContainer = document.getElementById("sections");
@@ -776,6 +976,26 @@
     const sundryManageListEl = document.getElementById("sundry-manage-list");
     const addSundryItemForm = document.getElementById("add-sundry-item-form");
     const newSundryInput = document.getElementById("new-sundry-input");
+
+    const savedMealsBtn = document.getElementById("saved-meals-btn");
+    const mealsModalBackdrop = document.getElementById("meals-modal-backdrop");
+    const closeMealsModalBtn = document.getElementById("close-meals-modal");
+    const addMealForm = document.getElementById("add-meal-form");
+    const newMealInput = document.getElementById("new-meal-input");
+    const mealsListEl = document.getElementById("meals-list");
+
+    const settingsDrawer = document.getElementById("settings-drawer");
+    const drawerBackdrop = document.getElementById("drawer-backdrop");
+    const closeSettingsDrawerBtn = document.getElementById("close-settings-drawer");
+    const drawerSundryBtn = document.getElementById("drawer-sundry-btn");
+    const drawerMealsBtn = document.getElementById("drawer-meals-btn");
+    const drawerRecipesBtn = document.getElementById("drawer-recipes-btn");
+    const drawerLoginBtn = document.getElementById("drawer-login-btn");
+    const drawerLogoutBtn = document.getElementById("drawer-logout-btn");
+    const drawerTestApiBtn = document.getElementById("drawer-test-api-btn");
+    const loginBtn = document.getElementById("login-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+    const testApiBtn = document.getElementById("test-api-btn");
 
     const appEl = document.querySelector(".app");
     const modeToggleEl = document.getElementById("mode-toggle");
@@ -812,6 +1032,24 @@
       "Conditioner"
     ];
 
+    const DEFAULT_MEALS = [
+      {
+        id: "meal-1",
+        name: "Taco night",
+        ingredients: ["Tortillas", "Ground beef", "Salsa", "Cheese", "Lettuce"],
+      },
+      {
+        id: "meal-2",
+        name: "Pasta and greens",
+        ingredients: ["Pasta", "Pesto", "Cherry tomatoes", "Spinach"],
+      },
+      {
+        id: "meal-3",
+        name: "Stir fry",
+        ingredients: ["Noodles", "Soy sauce", "Mixed veg", "Tofu"],
+      },
+    ];
+
     const BASE_SECTION_SUGGESTIONS = {
       breakfast: ["Eggs", "Bread", "Butter", "Cereal", "Yogurt", "Coffee"],
       lunch: ["Sandwich bread", "Cold cuts", "Salad leaves", "Soup", "Fruit"],
@@ -826,6 +1064,7 @@
     let appState = null;
     let isRestoring = false;
     let sundryItems = [];
+    let savedMeals = [];
 
     // ---------- Mode toggle ----------
 
@@ -875,6 +1114,16 @@
         appState.sundryItems = [...DEFAULT_SUNDRY_ITEMS];
       }
       sundryItems = [...appState.sundryItems];
+
+      if (!appState.savedMeals || !Array.isArray(appState.savedMeals)) {
+        appState.savedMeals = JSON.parse(JSON.stringify(DEFAULT_MEALS));
+      }
+
+      savedMeals = appState.savedMeals.map((meal, index) => ({
+        id: meal.id || `meal-${index}-${Date.now()}`,
+        name: meal.name || "Untitled meal",
+        ingredients: Array.isArray(meal.ingredients) ? [...meal.ingredients] : [],
+      }));
     }
 
     function saveAppState() {
@@ -1207,7 +1456,11 @@
       }
 
       if (settingsBtn) {
-        settingsBtn.addEventListener("click", () => openSundryModal(true));
+        settingsBtn.addEventListener("click", openSettingsDrawer);
+      }
+
+      if (savedMealsBtn) {
+        savedMealsBtn.addEventListener("click", openMealsModal);
       }
 
       if (closeSundryModalBtn) {
@@ -1253,6 +1506,138 @@
           newSundryInput.value = "";
           renderSundryChoices();
           renderSundryManageList();
+        });
+      }
+
+      if (mealsModalBackdrop) {
+        mealsModalBackdrop.addEventListener("click", (event) => {
+          if (event.target === mealsModalBackdrop) {
+            closeMealsModal();
+          }
+        });
+      }
+
+      if (closeMealsModalBtn) {
+        closeMealsModalBtn.addEventListener("click", closeMealsModal);
+      }
+
+      if (addMealForm) {
+        addMealForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const name = newMealInput.value.trim();
+          if (!name) return;
+          savedMeals.push({
+            id: `meal-${Date.now().toString(36)}`,
+            name,
+            ingredients: [],
+          });
+          newMealInput.value = "";
+          renderMealsList();
+          syncMealsToState();
+        });
+      }
+
+      if (mealsListEl) {
+        mealsListEl.addEventListener("click", (event) => {
+          const actionBtn = event.target.closest("[data-meal-action]");
+          if (!actionBtn) return;
+          const card = actionBtn.closest("[data-meal-id]");
+          if (!card) return;
+          const mealId = card.dataset.mealId;
+          const meal = savedMeals.find((m) => m.id === mealId);
+          if (!meal) return;
+
+          const action = actionBtn.dataset.mealAction;
+          if (action === "rename") {
+            const nextName = prompt("Rename meal", meal.name);
+            if (nextName === null) return;
+            const trimmed = nextName.trim();
+            if (trimmed) {
+              meal.name = trimmed;
+            }
+          }
+
+          if (action === "delete") {
+            if (!confirm(`Delete meal "${meal.name}"?`)) return;
+            savedMeals = savedMeals.filter((m) => m.id !== mealId);
+          }
+
+          if (action === "remove-ingredient") {
+            const index = Number(actionBtn.dataset.ingredientIndex);
+            if (!Number.isNaN(index)) {
+              meal.ingredients.splice(index, 1);
+            }
+          }
+
+          renderMealsList();
+          syncMealsToState();
+        });
+
+        mealsListEl.addEventListener("submit", (event) => {
+          const form = event.target.closest("form[data-meal-id]");
+          if (!form) return;
+          event.preventDefault();
+          const mealId = form.dataset.mealId;
+          const meal = savedMeals.find((m) => m.id === mealId);
+          if (!meal) return;
+          const input = form.querySelector("input");
+          const value = input?.value.trim();
+          if (!value) return;
+          meal.ingredients.push(value);
+          input.value = "";
+          renderMealsList();
+          syncMealsToState();
+        });
+      }
+
+      if (drawerBackdrop) {
+        drawerBackdrop.addEventListener("click", closeSettingsDrawer);
+      }
+
+      if (closeSettingsDrawerBtn) {
+        closeSettingsDrawerBtn.addEventListener("click", closeSettingsDrawer);
+      }
+
+      const goToSundry = () => {
+        closeSettingsDrawer();
+        openSundryModal(true);
+      };
+
+      const goToMeals = () => {
+        closeSettingsDrawer();
+        openMealsModal();
+      };
+
+      if (drawerSundryBtn) {
+        drawerSundryBtn.addEventListener("click", goToSundry);
+      }
+
+      if (drawerMealsBtn) {
+        drawerMealsBtn.addEventListener("click", goToMeals);
+      }
+
+      if (drawerRecipesBtn) {
+        drawerRecipesBtn.addEventListener("click", goToMeals);
+      }
+
+      if (drawerLoginBtn && loginBtn) {
+        drawerLoginBtn.addEventListener("click", () => {
+          closeSettingsDrawer();
+          loginBtn.click();
+        });
+      }
+
+      if (drawerLogoutBtn && logoutBtn) {
+        drawerLogoutBtn.addEventListener("click", () => {
+          closeSettingsDrawer();
+          logoutBtn.click();
+        });
+      }
+
+      if (drawerTestApiBtn && testApiBtn) {
+        drawerTestApiBtn.addEventListener("click", () => {
+          closeSettingsDrawer();
+          testApiBtn.click();
         });
       }
     }
@@ -1810,6 +2195,25 @@
 
       row.appendChild(dragHandle);
       row.appendChild(label);
+
+      const actions = document.createElement("div");
+      actions.className = "item-actions";
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "item-action-btn";
+      editBtn.dataset.itemAction = "edit";
+      editBtn.textContent = "Edit";
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "item-action-btn";
+      deleteBtn.dataset.itemAction = "delete";
+      deleteBtn.textContent = "Delete";
+
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+      row.appendChild(actions);
       li.appendChild(row);
 
       return li;
@@ -1934,7 +2338,153 @@
       closeSundryModal();
     }
 
+    // ---------- Saved meals helpers ----------
+
+    function syncMealsToState() {
+      if (!appState) return;
+      appState.savedMeals = savedMeals.map((meal) => ({
+        id: meal.id,
+        name: meal.name,
+        ingredients: [...meal.ingredients],
+      }));
+      saveAppState();
+    }
+
+    function renderMealsList() {
+      if (!mealsListEl) return;
+      mealsListEl.innerHTML = "";
+
+      if (!savedMeals.length) {
+        const empty = document.createElement("p");
+        empty.textContent = "No meals saved yet. Add your first meal above.";
+        empty.style.color = "#6b7280";
+        empty.style.margin = "0";
+        mealsListEl.appendChild(empty);
+        return;
+      }
+
+      savedMeals.forEach((meal) => {
+        const card = document.createElement("div");
+        card.className = "meal-card";
+        card.dataset.mealId = meal.id;
+
+        const titleRow = document.createElement("div");
+        titleRow.style.display = "flex";
+        titleRow.style.alignItems = "center";
+        titleRow.style.justifyContent = "space-between";
+        titleRow.style.gap = "0.5rem";
+
+        const heading = document.createElement("h4");
+        heading.textContent = meal.name;
+        titleRow.appendChild(heading);
+
+        const mealActions = document.createElement("div");
+        mealActions.className = "item-actions";
+
+        const renameBtn = document.createElement("button");
+        renameBtn.type = "button";
+        renameBtn.textContent = "Rename";
+        renameBtn.className = "item-action-btn";
+        renameBtn.dataset.mealAction = "rename";
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.className = "item-action-btn";
+        deleteBtn.dataset.mealAction = "delete";
+
+        mealActions.appendChild(renameBtn);
+        mealActions.appendChild(deleteBtn);
+        titleRow.appendChild(mealActions);
+
+        const ingredientsTitle = document.createElement("p");
+        ingredientsTitle.textContent = "Ingredients";
+        ingredientsTitle.style.margin = "0.35rem 0 0.25rem";
+        ingredientsTitle.style.fontWeight = "600";
+        ingredientsTitle.style.color = "#1f2937";
+
+        const list = document.createElement("ul");
+        list.className = "ingredient-list";
+
+        meal.ingredients.forEach((ingredient, index) => {
+          const item = document.createElement("li");
+          item.textContent = ingredient;
+          const removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.textContent = "Remove";
+          removeBtn.className = "item-action-btn";
+          removeBtn.dataset.mealAction = "remove-ingredient";
+          removeBtn.dataset.ingredientIndex = String(index);
+          item.appendChild(removeBtn);
+          list.appendChild(item);
+        });
+
+        const ingredientForm = document.createElement("form");
+        ingredientForm.className = "item-form";
+        ingredientForm.dataset.mealId = meal.id;
+        ingredientForm.innerHTML = `
+          <input type="text" class="subtle-input" placeholder="Add ingredient" autocomplete="off" style="flex:1;">
+          <button type="submit">Add</button>
+        `;
+
+        card.appendChild(titleRow);
+        card.appendChild(ingredientsTitle);
+        card.appendChild(list);
+        card.appendChild(ingredientForm);
+        mealsListEl.appendChild(card);
+      });
+    }
+
+    function openMealsModal() {
+      if (!mealsModalBackdrop) return;
+      renderMealsList();
+      mealsModalBackdrop.classList.add("active");
+      newMealInput?.focus();
+    }
+
+    function closeMealsModal() {
+      if (mealsModalBackdrop) {
+        mealsModalBackdrop.classList.remove("active");
+      }
+    }
+
+    // ---------- Settings drawer helpers ----------
+
+    function openSettingsDrawer() {
+      settingsDrawer?.classList.add("open");
+      drawerBackdrop?.classList.add("active");
+    }
+
+    function closeSettingsDrawer() {
+      settingsDrawer?.classList.remove("open");
+      drawerBackdrop?.classList.remove("active");
+    }
+
     // ---------- Event wiring for sections/items ----------
+
+    function handleItemAction(event) {
+      const actionBtn = event.target.closest("[data-item-action]");
+      if (!actionBtn) return;
+      const li = actionBtn.closest("li");
+      if (!li) return;
+      const textSpan = li.querySelector(".item-text");
+      const action = actionBtn.dataset.itemAction;
+
+      if (action === "edit") {
+        const current = textSpan?.textContent || "";
+        const nextValue = prompt("Edit item", current);
+        if (nextValue === null) return;
+        const trimmed = nextValue.trim();
+        if (!trimmed || !textSpan) return;
+        textSpan.textContent = trimmed;
+      }
+
+      if (action === "delete") {
+        li.remove();
+      }
+
+      updateCountsAndEmptyStates();
+    }
 
     // Add section form (top)
     addSectionFormEl.addEventListener("submit", (event) => {
@@ -1944,6 +2494,9 @@
       addSection(value);
       sectionInputEl.value = "";
     });
+
+    sectionsContainer.addEventListener("click", handleItemAction);
+    completedListEl.addEventListener("click", handleItemAction);
 
     // Adding items to specific sections (event delegation)
     sectionsContainer.addEventListener("submit", (event) => {
