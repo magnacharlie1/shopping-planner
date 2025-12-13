@@ -419,6 +419,125 @@
       height: 16px;
     }
 
+    .suggestion-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 0.5rem 0.65rem;
+      margin: 0.35rem 0 0.55rem;
+      font-size: 0.9rem;
+      color: #475569;
+    }
+
+    .suggestion-chip {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #0f172a;
+      border-radius: 999px;
+      padding: 0.3rem 0.65rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .suggestion-chip:hover {
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .suggestion-chip.primary {
+      background: linear-gradient(135deg, #4f46e5, #2563eb);
+      color: #fff;
+      border-color: #4338ca;
+    }
+
+    .sundry-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 0.4rem 0 0.8rem;
+    }
+
+    .ghost-btn {
+      background: #f3f4f6;
+      color: #0f172a;
+      border: 1px solid #e5e7eb;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 20;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 18px 50px rgba(15, 23, 42, 0.16);
+      width: 100%;
+      max-width: 460px;
+      padding: 1.1rem 1.25rem 1.35rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    .modal h3 {
+      margin: 0 0 0.25rem;
+      font-size: 1.1rem;
+    }
+
+    .modal p {
+      margin: 0 0 0.65rem;
+      color: #6b7280;
+      font-size: 0.92rem;
+    }
+
+    .modal-section {
+      margin: 0.8rem 0;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 0.8rem;
+    }
+
+    .sundry-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.4rem 0.6rem;
+    }
+
+    .sundry-list label {
+      font-size: 0.95rem;
+    }
+
+    .sundry-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.35rem 0.5rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #f8fafc;
+      gap: 0.45rem;
+    }
+
+    .sundry-item-row button {
+      padding: 0.25rem 0.55rem;
+      font-size: 0.8rem;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
     .drag-hint {
       display: flex;
       align-items: center;
@@ -554,6 +673,11 @@
       <button id="delete-list-btn" type="button">Delete</button>
     </div>
 
+    <div class="sundry-actions">
+      <button id="sundry-btn" type="button" class="ghost-btn">Sundry reminders</button>
+      <button id="settings-btn" type="button" class="ghost-btn">Sundry settings</button>
+    </div>
+
     <!-- Add section (e.g. Monday, BBQ, Meal prep) -->
     <form id="add-section-form" class="top-form">
       <input
@@ -594,6 +718,37 @@
     </div>
   </div>
 
+  <div id="sundry-modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="sundry-modal-title">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.6rem;">
+        <div>
+          <h3 id="sundry-modal-title">Sundry reminders</h3>
+          <p>Pick the everyday extras to drop into your General section.</p>
+        </div>
+        <button id="close-sundry-modal" type="button" class="ghost-btn" aria-label="Close">Close</button>
+      </div>
+
+      <div class="modal-section">
+        <h4 style="margin:0 0 0.35rem;">Quick add</h4>
+        <div id="sundry-choices" class="sundry-list"></div>
+        <div style="margin-top:0.65rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button id="add-selected-sundry" type="button">Add selected to General</button>
+          <button id="select-all-sundry" type="button" class="ghost-btn">Select all</button>
+          <button id="clear-sundry-selection" type="button" class="ghost-btn">Clear</button>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <h4 style="margin:0 0 0.35rem;">Manage sundry list</h4>
+        <form id="add-sundry-item-form" style="display:flex; gap:0.5rem; margin-bottom:0.65rem;">
+          <input id="new-sundry-input" type="text" placeholder="Add sundry item" autocomplete="off" style="flex:1; padding:0.5rem 0.65rem; border-radius:10px; border:1px solid #e5e7eb;">
+          <button type="submit">Add</button>
+        </form>
+        <div id="sundry-manage-list" class="sundry-manage"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // DOM references
     const sectionsContainer = document.getElementById("sections");
@@ -609,6 +764,18 @@
     const newListBtn = document.getElementById("new-list-btn");
     const renameListBtn = document.getElementById("rename-list-btn");
     const deleteListBtn = document.getElementById("delete-list-btn");
+
+    const sundryBtn = document.getElementById("sundry-btn");
+    const settingsBtn = document.getElementById("settings-btn");
+    const sundryModalBackdrop = document.getElementById("sundry-modal-backdrop");
+    const closeSundryModalBtn = document.getElementById("close-sundry-modal");
+    const sundryChoicesEl = document.getElementById("sundry-choices");
+    const addSelectedSundryBtn = document.getElementById("add-selected-sundry");
+    const selectAllSundryBtn = document.getElementById("select-all-sundry");
+    const clearSundrySelectionBtn = document.getElementById("clear-sundry-selection");
+    const sundryManageListEl = document.getElementById("sundry-manage-list");
+    const addSundryItemForm = document.getElementById("add-sundry-item-form");
+    const newSundryInput = document.getElementById("new-sundry-input");
 
     const appEl = document.querySelector(".app");
     const modeToggleEl = document.getElementById("mode-toggle");
@@ -626,8 +793,39 @@
 
     // Persistence state
     const STORAGE_KEY = "shoppingPlannerLists_v1";
+    const DEFAULT_SUNDRY_ITEMS = [
+      "Toothpaste",
+      "Toothbrushes",
+      "Bin bags",
+      "Food bin bags",
+      "Laundry detergent",
+      "Dish soap",
+      "Sponges",
+      "Hand soap",
+      "Toilet roll",
+      "Kitchen roll",
+      "Aluminium foil",
+      "Cling film",
+      "Batteries",
+      "Painkillers",
+      "Shampoo",
+      "Conditioner"
+    ];
+
+    const BASE_SECTION_SUGGESTIONS = {
+      breakfast: ["Eggs", "Bread", "Butter", "Cereal", "Yogurt", "Coffee"],
+      lunch: ["Sandwich bread", "Cold cuts", "Salad leaves", "Soup", "Fruit"],
+      dinner: ["Chicken breast", "Rice", "Pasta", "Tomato sauce", "Veg mix"],
+      bbq: ["Burgers", "Sausages", "Buns", "Coleslaw", "Charcoal", "Condiments"],
+      picnic: ["Wraps", "Chips", "Dips", "Juice boxes", "Fruit", "Napkins"],
+      prep: ["Meal prep containers", "Rice", "Chicken", "Veg", "Seasoning"],
+      freezer: ["Frozen veg", "Frozen berries", "Ice cream", "Oven fries"],
+      general: ["Milk", "Bread", "Fruit", "Snacks"]
+    };
+
     let appState = null;
     let isRestoring = false;
+    let sundryItems = [];
 
     // ---------- Mode toggle ----------
 
@@ -667,6 +865,16 @@
       } catch (e) {
         console.error("Failed to save state:", e);
       }
+    }
+
+    function ensureAppStateShape() {
+      if (!appState.sectionSuggestions) {
+        appState.sectionSuggestions = {};
+      }
+      if (!appState.sundryItems || !Array.isArray(appState.sundryItems)) {
+        appState.sundryItems = [...DEFAULT_SUNDRY_ITEMS];
+      }
+      sundryItems = [...appState.sundryItems];
     }
 
     function saveAppState() {
@@ -895,6 +1103,8 @@
         appState = { currentListId: null, lists: {} };
       }
 
+      ensureAppStateShape();
+
       const ids = Object.keys(appState.lists);
 
       if (ids.length === 0) {
@@ -908,6 +1118,7 @@
           },
         };
         appState.currentListId = defaultId;
+        ensureAppStateShape();
         saveAppState();
       } else if (!appState.currentListId || !appState.lists[appState.currentListId]) {
         appState.currentListId = ids[0];
@@ -943,6 +1154,7 @@
           },
         };
         appState.currentListId = id;
+        ensureAppStateShape();
         saveAppState();
         refreshListSelect();
         renderList(id);
@@ -989,6 +1201,60 @@
         refreshListSelect();
         renderList(appState.currentListId);
       });
+
+      if (sundryBtn) {
+        sundryBtn.addEventListener("click", () => openSundryModal(false));
+      }
+
+      if (settingsBtn) {
+        settingsBtn.addEventListener("click", () => openSundryModal(true));
+      }
+
+      if (closeSundryModalBtn) {
+        closeSundryModalBtn.addEventListener("click", closeSundryModal);
+      }
+
+      if (sundryModalBackdrop) {
+        sundryModalBackdrop.addEventListener("click", (event) => {
+          if (event.target === sundryModalBackdrop) {
+            closeSundryModal();
+          }
+        });
+      }
+
+      if (addSelectedSundryBtn) {
+        addSelectedSundryBtn.addEventListener("click", addSelectedSundryToList);
+      }
+
+      if (selectAllSundryBtn) {
+        selectAllSundryBtn.addEventListener("click", () => {
+          sundryChoicesEl?.querySelectorAll("input[type='checkbox']").forEach((cb) => {
+            cb.checked = true;
+          });
+        });
+      }
+
+      if (clearSundrySelectionBtn) {
+        clearSundrySelectionBtn.addEventListener("click", () => {
+          sundryChoicesEl?.querySelectorAll("input[type='checkbox']").forEach((cb) => {
+            cb.checked = false;
+          });
+        });
+      }
+
+      if (addSundryItemForm) {
+        addSundryItemForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const value = newSundryInput.value.trim();
+          if (!value) return;
+          if (sundryItems.includes(value)) return;
+          sundryItems.push(value);
+          syncSundryItemsToState();
+          newSundryInput.value = "";
+          renderSundryChoices();
+          renderSundryManageList();
+        });
+      }
     }
 
     // Server data functions
@@ -1055,6 +1321,7 @@
       if (hasValidRemote) {
         // Use cloud state
         appState = remote;
+        ensureAppStateShape();
 
         // Clear current DOM
         sectionsContainer.innerHTML = "";
@@ -1355,6 +1622,7 @@
           <h2>${name}</h2>
           <span class="count" data-role="active-count"></span>
         </div>
+        <div class="suggestion-bar" data-role="suggestion-bar" hidden></div>
         <form class="item-form">
           <input
             type="text"
@@ -1374,6 +1642,98 @@
       return section;
     }
 
+    function normalizeSectionName(name) {
+      return (name || "").trim().toLowerCase();
+    }
+
+    function recordSectionItem(sectionName, itemName) {
+      if (!appState) return;
+      const key = normalizeSectionName(sectionName);
+      if (!key || !itemName) return;
+      if (!appState.sectionSuggestions[key]) {
+        appState.sectionSuggestions[key] = [];
+      }
+      const items = appState.sectionSuggestions[key];
+      if (!items.includes(itemName)) {
+        items.push(itemName);
+        saveAppState();
+      }
+    }
+
+    function getSuggestionsForSection(sectionName) {
+      const key = normalizeSectionName(sectionName);
+      const learned = appState?.sectionSuggestions?.[key] || [];
+      const base = BASE_SECTION_SUGGESTIONS[key] || [];
+      return [...new Set([...learned, ...base])];
+    }
+
+    function renderSectionSuggestions(sectionEl, sectionName) {
+      const bar = sectionEl.querySelector("[data-role='suggestion-bar']");
+      if (!bar) return;
+
+      const activeList = sectionEl.querySelector(".active-list");
+      const hasItems = activeList && activeList.querySelectorAll(".item").length > 0;
+      const suggestions = getSuggestionsForSection(sectionName);
+
+      if (!suggestions.length || hasItems) {
+        bar.hidden = true;
+        bar.innerHTML = "";
+        return;
+      }
+
+      bar.hidden = false;
+      bar.innerHTML = "";
+
+      const label = document.createElement("span");
+      label.textContent = "Suggested:";
+      bar.appendChild(label);
+
+      const maxSuggestions = 6;
+      suggestions.slice(0, maxSuggestions).forEach((suggestion) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "suggestion-chip";
+        chip.textContent = suggestion;
+        chip.addEventListener("click", () => {
+          addItemToSection(sectionEl, suggestion);
+        });
+        bar.appendChild(chip);
+      });
+
+      if (suggestions.length > 1) {
+        const addAll = document.createElement("button");
+        addAll.type = "button";
+        addAll.className = "suggestion-chip primary";
+        addAll.textContent = "Add all";
+        addAll.addEventListener("click", () => {
+          suggestions.slice(0, maxSuggestions).forEach((sugg) => {
+            addItemToSection(sectionEl, sugg);
+          });
+          bar.hidden = true;
+        });
+        bar.appendChild(addAll);
+      }
+    }
+
+    function getOrCreateSectionByName(sectionName) {
+      const normalized = normalizeSectionName(sectionName);
+      let sectionEl = null;
+      sectionsContainer.querySelectorAll(".section").forEach((section) => {
+        const name = normalizeSectionName(section.querySelector("h2")?.textContent || "");
+        if (name === normalized) {
+          sectionEl = section;
+        }
+      });
+
+      if (!sectionEl) {
+        addSection(sectionName);
+        const sections = sectionsContainer.querySelectorAll(".section");
+        sectionEl = sections[sections.length - 1];
+      }
+
+      return sectionEl;
+    }
+
     function addSection(name) {
       if (!name) return;
       const section = createSectionElement(name);
@@ -1382,6 +1742,10 @@
 
       const input = section.querySelector(".item-input");
       if (input) input.focus();
+
+      if (!isRestoring) {
+        renderSectionSuggestions(section, name);
+      }
     }
 
     function createItemElement(name, sectionName, sectionId) {
@@ -1460,7 +1824,114 @@
       const li = createItemElement(itemName, sectionName, sectionId);
       activeList.appendChild(li);
 
+      recordSectionItem(sectionName, itemName);
+
+      const bar = sectionEl.querySelector("[data-role='suggestion-bar']");
+      if (bar) {
+        bar.hidden = true;
+      }
+
       updateCountsAndEmptyStates();
+    }
+
+    // ---------- Sundry helpers ----------
+
+    function syncSundryItemsToState() {
+      if (!appState) return;
+      appState.sundryItems = [...sundryItems];
+      saveAppState();
+    }
+
+    function renderSundryChoices() {
+      if (!sundryChoicesEl) return;
+      sundryChoicesEl.innerHTML = "";
+
+      sundryItems.forEach((item, index) => {
+        const id = `sundry-choice-${index}`;
+        const wrapper = document.createElement("label");
+        wrapper.setAttribute("for", id);
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = id;
+        checkbox.value = item;
+
+        const text = document.createTextNode(item);
+
+        wrapper.appendChild(checkbox);
+        wrapper.appendChild(text);
+        sundryChoicesEl.appendChild(wrapper);
+      });
+    }
+
+    function renderSundryManageList() {
+      if (!sundryManageListEl) return;
+      sundryManageListEl.innerHTML = "";
+
+      if (!sundryItems.length) {
+        const empty = document.createElement("p");
+        empty.textContent = "No sundry items yet.";
+        empty.style.color = "#6b7280";
+        empty.style.margin = "0";
+        sundryManageListEl.appendChild(empty);
+        return;
+      }
+
+      sundryItems.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "sundry-item-row";
+
+        const label = document.createElement("span");
+        label.textContent = item;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.textContent = "Remove";
+        removeBtn.addEventListener("click", () => {
+          sundryItems.splice(index, 1);
+          syncSundryItemsToState();
+          renderSundryChoices();
+          renderSundryManageList();
+        });
+
+        row.appendChild(label);
+        row.appendChild(removeBtn);
+        sundryManageListEl.appendChild(row);
+      });
+    }
+
+    function openSundryModal(showManage = false) {
+      if (!sundryModalBackdrop) return;
+      renderSundryChoices();
+      renderSundryManageList();
+      sundryModalBackdrop.classList.add("active");
+      if (showManage && newSundryInput) {
+        newSundryInput.focus();
+      }
+    }
+
+    function closeSundryModal() {
+      if (sundryModalBackdrop) {
+        sundryModalBackdrop.classList.remove("active");
+      }
+    }
+
+    function addSelectedSundryToList() {
+      if (!sundryChoicesEl) return;
+      const selected = [...sundryChoicesEl.querySelectorAll("input[type='checkbox']:checked")]
+        .map((checkbox) => checkbox.value);
+
+      if (!selected.length) {
+        closeSundryModal();
+        return;
+      }
+
+      const generalSection = getOrCreateSectionByName("General");
+      selected.forEach((item) => addItemToSection(generalSection, item));
+      sundryChoicesEl.querySelectorAll("input[type='checkbox']").forEach((cb) => {
+        cb.checked = false;
+      });
+      closeSundryModal();
     }
 
     // ---------- Event wiring for sections/items ----------
