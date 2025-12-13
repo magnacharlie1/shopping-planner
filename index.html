@@ -47,20 +47,46 @@
       width: 100%;
       max-width: 560px;
       border: 1px solid rgba(226, 232, 240, 0.7);
+      position: relative;
     }
 
     h1 {
-      margin: 0 0 0.6rem;
+      margin: 0 0 0.2rem;
       font-size: 1.45rem;
-      text-align: center;
       letter-spacing: -0.02em;
     }
 
     .subtitle {
-      text-align: center;
       color: #6b7280;
-      margin: 0 0 1.1rem;
+      margin: 0;
       font-size: 0.95rem;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .settings-icon-btn {
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #1f2937;
+      border: 1px solid #e0e7ff;
+      padding: 0.55rem;
+      height: 44px;
+      width: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 18px rgba(79, 70, 229, 0.1);
+    }
+
+    .settings-icon-btn svg {
+      width: 18px;
+      height: 18px;
     }
 
     /* Auth bar at top of card */
@@ -210,7 +236,7 @@
     .section-header {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: center;
       margin-bottom: 0.35rem;
     }
 
@@ -218,6 +244,20 @@
       margin: 0;
       font-size: 1.05rem;
       letter-spacing: -0.01em;
+    }
+
+    .section-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .section-save-btn {
+      background: #eef2ff;
+      color: #1f2937;
+      border: 1px solid #e0e7ff;
+      padding: 0.32rem 0.55rem;
+      font-size: 0.8rem;
     }
 
     .count {
@@ -474,13 +514,6 @@
       border-color: #4338ca;
     }
 
-    .sundry-actions {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin: 0.4rem 0 0.8rem;
-    }
-
     .ghost-btn {
       background: #f3f4f6;
       color: #0f172a;
@@ -551,9 +584,10 @@
       inset: 0;
       background: rgba(15, 23, 42, 0.35);
       display: none;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
       padding: 1rem;
+      overflow-y: auto;
       z-index: 20;
     }
 
@@ -588,6 +622,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.9rem;
+      overflow-y: auto;
     }
 
     .side-drawer.open {
@@ -633,6 +668,8 @@
       max-width: 460px;
       padding: 1.1rem 1.25rem 1.35rem;
       border: 1px solid #e2e8f0;
+      max-height: calc(90vh - 1rem);
+      overflow-y: auto;
     }
 
     .modal h3 {
@@ -729,6 +766,15 @@
         margin-bottom: 0.5rem;
       }
 
+      .header-row {
+        align-items: center;
+      }
+
+      .settings-icon-btn {
+        height: 42px;
+        width: 42px;
+      }
+
       .auth-bar {
         justify-content: center;
         flex-wrap: wrap;
@@ -798,8 +844,18 @@
       <button id="test-api-btn" type="button" style="display:none;">Test API</button>
     </div>
 
-    <h1>Shopping Planner</h1>
-    <p class="subtitle">Built for fast on-the-go shopping — drag items with the handle or tap sections to keep things tidy.</p>
+    <div class="header-row">
+      <div>
+        <h1>Shopping Planner</h1>
+        <p class="subtitle">Built for fast on-the-go shopping — drag items with the handle or tap sections to keep things tidy.</p>
+      </div>
+      <button id="settings-icon-btn" type="button" class="settings-icon-btn" aria-label="Open settings">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 8.6 15a1.65 1.65 0 0 0-1.82-.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 15 8.6a1.65 1.65 0 0 0 1.82.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 15z"></path>
+        </svg>
+      </button>
+    </div>
 
     <!-- Mode toggle -->
     <div id="mode-toggle" class="mode-toggle">
@@ -813,12 +869,6 @@
       <button id="new-list-btn" type="button" class="primary">New list</button>
       <button id="rename-list-btn" type="button">Rename</button>
       <button id="delete-list-btn" type="button">Delete</button>
-    </div>
-
-    <div class="sundry-actions">
-      <button id="sundry-btn" type="button" class="ghost-btn">Sundry reminders</button>
-      <button id="saved-meals-btn" type="button" class="ghost-btn">Saved meals</button>
-      <button id="settings-btn" type="button" class="ghost-btn">Settings</button>
     </div>
 
     <!-- Add section (e.g. Monday, BBQ, Meal prep) -->
@@ -965,8 +1015,6 @@
     const renameListBtn = document.getElementById("rename-list-btn");
     const deleteListBtn = document.getElementById("delete-list-btn");
 
-    const sundryBtn = document.getElementById("sundry-btn");
-    const settingsBtn = document.getElementById("settings-btn");
     const sundryModalBackdrop = document.getElementById("sundry-modal-backdrop");
     const closeSundryModalBtn = document.getElementById("close-sundry-modal");
     const sundryChoicesEl = document.getElementById("sundry-choices");
@@ -977,7 +1025,6 @@
     const addSundryItemForm = document.getElementById("add-sundry-item-form");
     const newSundryInput = document.getElementById("new-sundry-input");
 
-    const savedMealsBtn = document.getElementById("saved-meals-btn");
     const mealsModalBackdrop = document.getElementById("meals-modal-backdrop");
     const closeMealsModalBtn = document.getElementById("close-meals-modal");
     const addMealForm = document.getElementById("add-meal-form");
@@ -993,6 +1040,7 @@
     const drawerLoginBtn = document.getElementById("drawer-login-btn");
     const drawerLogoutBtn = document.getElementById("drawer-logout-btn");
     const drawerTestApiBtn = document.getElementById("drawer-test-api-btn");
+    const settingsIconBtn = document.getElementById("settings-icon-btn");
     const loginBtn = document.getElementById("login-btn");
     const logoutBtn = document.getElementById("logout-btn");
     const testApiBtn = document.getElementById("test-api-btn");
@@ -1258,6 +1306,7 @@
 
       updateCountsAndEmptyStates();
       isRestoring = false;
+      refreshSectionsAfterMealChange();
     }
 
     // Menu view: no checkboxes, no Completed section, all items in their sections
@@ -1327,6 +1376,7 @@
 
       updateCountsAndEmptyStates();
       isRestoring = false;
+      refreshSectionsAfterMealChange();
     }
 
     function renderList(listId) {
@@ -1451,16 +1501,8 @@
         renderList(appState.currentListId);
       });
 
-      if (sundryBtn) {
-        sundryBtn.addEventListener("click", () => openSundryModal(false));
-      }
-
-      if (settingsBtn) {
-        settingsBtn.addEventListener("click", openSettingsDrawer);
-      }
-
-      if (savedMealsBtn) {
-        savedMealsBtn.addEventListener("click", openMealsModal);
+      if (settingsIconBtn) {
+        settingsIconBtn.addEventListener("click", openSettingsDrawer);
       }
 
       if (closeSundryModalBtn) {
@@ -1770,6 +1812,11 @@
         if (dropArea) {
           dropArea.classList.toggle("hidden", activeCount > 0);
         }
+
+        if (activeCount === 0) {
+          const sectionName = section.querySelector("h2")?.textContent || "";
+          renderSectionSuggestions(section, sectionName);
+        }
       });
 
       const completedCount = completedListEl.querySelectorAll(".item").length;
@@ -2005,7 +2052,10 @@
       section.innerHTML = `
         <div class="section-header">
           <h2>${name}</h2>
-          <span class="count" data-role="active-count"></span>
+          <div class="section-meta">
+            <button type="button" class="ghost-btn section-save-btn" data-role="save-recipe">Save recipe</button>
+            <span class="count" data-role="active-count"></span>
+          </div>
         </div>
         <div class="suggestion-bar" data-role="suggestion-bar" hidden></div>
         <form class="item-form">
@@ -2023,6 +2073,12 @@
         <ul class="active-list"></ul>
       `;
 
+      const saveRecipeBtn = section.querySelector("[data-role='save-recipe']");
+      if (saveRecipeBtn) {
+        saveRecipeBtn.addEventListener("click", () => saveSectionAsRecipe(section));
+      }
+
+      refreshSectionRecipeButton(section);
       setupDropZoneForSection(section);
       return section;
     }
@@ -2031,25 +2087,69 @@
       return (name || "").trim().toLowerCase();
     }
 
-    function recordSectionItem(sectionName, itemName) {
-      if (!appState) return;
-      const key = normalizeSectionName(sectionName);
-      if (!key || !itemName) return;
-      if (!appState.sectionSuggestions[key]) {
-        appState.sectionSuggestions[key] = [];
+    function findMealByName(name) {
+      const key = normalizeSectionName(name);
+      return savedMeals.find((meal) => normalizeSectionName(meal.name) === key);
+    }
+
+    function collectSectionItems(sectionEl) {
+      if (!sectionEl) return [];
+      const active = [...sectionEl.querySelectorAll(".active-list .item-text")]
+        .map((el) => el.textContent?.trim())
+        .filter(Boolean);
+
+      const sectionId = sectionEl.dataset.sectionId;
+      const completedItems = sectionId
+        ? [...completedListEl.querySelectorAll(`.item[data-section-id="${sectionId}"] .item-text`)]
+            .map((el) => el.textContent?.trim())
+            .filter(Boolean)
+        : [];
+
+      return [...new Set([...active, ...completedItems])];
+    }
+
+    function refreshSectionRecipeButton(sectionEl) {
+      const btn = sectionEl?.querySelector("[data-role='save-recipe']");
+      if (!btn) return;
+      const sectionName = sectionEl.querySelector("h2")?.textContent || "";
+      const hasRecipe = Boolean(findMealByName(sectionName));
+      btn.textContent = hasRecipe ? "Update recipe" : "Save recipe";
+    }
+
+    function saveSectionAsRecipe(sectionEl) {
+      if (!sectionEl || !appState) return;
+      const sectionName = sectionEl.querySelector("h2")?.textContent || "";
+      if (!sectionName) return;
+
+      const ingredients = collectSectionItems(sectionEl);
+      const existing = findMealByName(sectionName);
+
+      if (existing) {
+        existing.ingredients = [...ingredients];
+      } else {
+        savedMeals.push({
+          id: `meal-${Date.now().toString(36)}`,
+          name: sectionName,
+          ingredients: [...ingredients],
+        });
       }
-      const items = appState.sectionSuggestions[key];
-      if (!items.includes(itemName)) {
-        items.push(itemName);
-        saveAppState();
-      }
+
+      appState.sectionSuggestions[normalizeSectionName(sectionName)] = [...ingredients];
+
+      refreshSectionRecipeButton(sectionEl);
+      renderMealsList();
+      syncMealsToState();
+      renderSectionSuggestions(sectionEl, sectionName);
     }
 
     function getSuggestionsForSection(sectionName) {
       const key = normalizeSectionName(sectionName);
+      const recipe = findMealByName(sectionName);
+      const recipeIngredients = recipe ? recipe.ingredients : [];
       const learned = appState?.sectionSuggestions?.[key] || [];
       const base = BASE_SECTION_SUGGESTIONS[key] || [];
-      return [...new Set([...learned, ...base])];
+      const primary = recipeIngredients.length ? recipeIngredients : learned;
+      return [...new Set([...(primary || []), ...base])];
     }
 
     function renderSectionSuggestions(sectionEl, sectionName) {
@@ -2098,6 +2198,14 @@
         });
         bar.appendChild(addAll);
       }
+    }
+
+    function refreshSectionsAfterMealChange() {
+      sectionsContainer.querySelectorAll(".section").forEach((section) => {
+        refreshSectionRecipeButton(section);
+        const name = section.querySelector("h2")?.textContent || "";
+        renderSectionSuggestions(section, name);
+      });
     }
 
     function getOrCreateSectionByName(sectionName) {
@@ -2228,8 +2336,6 @@
       const li = createItemElement(itemName, sectionName, sectionId);
       activeList.appendChild(li);
 
-      recordSectionItem(sectionName, itemName);
-
       const bar = sectionEl.querySelector("[data-role='suggestion-bar']");
       if (bar) {
         bar.hidden = true;
@@ -2347,7 +2453,14 @@
         name: meal.name,
         ingredients: [...meal.ingredients],
       }));
+      const suggestionCopy = {};
+      savedMeals.forEach((meal) => {
+        const key = normalizeSectionName(meal.name);
+        suggestionCopy[key] = [...meal.ingredients];
+      });
+      appState.sectionSuggestions = suggestionCopy;
       saveAppState();
+      refreshSectionsAfterMealChange();
     }
 
     function renderMealsList() {
