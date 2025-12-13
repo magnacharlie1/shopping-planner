@@ -240,6 +240,12 @@
       margin-bottom: 0.35rem;
     }
 
+    .section-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
     .section-header h2 {
       margin: 0;
       font-size: 1.05rem;
@@ -250,6 +256,36 @@
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
+    }
+
+    .section-toggle-btn {
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      background: #f8fafc;
+      color: #1f2937;
+      width: 34px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .section-toggle-icon {
+      display: inline-block;
+      transition: transform 140ms ease;
+    }
+
+    .section.collapsed .section-toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .section-delete-btn {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      padding: 0.3rem 0.55rem;
+      font-size: 0.8rem;
     }
 
     .section-save-btn {
@@ -290,6 +326,15 @@
     .active-list {
       min-height: 0.5rem;
       padding: 0.1rem 0;
+    }
+
+    .section-body {
+      margin-top: 0.25rem;
+    }
+
+    .section.collapsed .section-body,
+    .section.collapsed .suggestion-bar {
+      display: none;
     }
 
     li {
@@ -1199,7 +1244,8 @@
             }
           });
         }
-        sectionsData.push({ name: sectionName, items });
+        const isCollapsed = section.classList.contains("collapsed");
+        sectionsData.push({ name: sectionName, items, collapsed: isCollapsed });
       });
 
       const completedData = [];
@@ -1263,7 +1309,7 @@
 
       // Build sections & active items
       data.sections.forEach((sectionData) => {
-        addSection(sectionData.name);
+        addSection(sectionData.name, { collapsed: !!sectionData.collapsed });
         const sectionEls = sectionsContainer.querySelectorAll(".section");
         const sectionEl = sectionEls[sectionEls.length - 1];
         sectionData.items.forEach((item) => {
@@ -1330,7 +1376,7 @@
 
       // Create sections for all known section names
       data.sections.forEach((sectionData) => {
-        const sectionEl = createSectionElement(sectionData.name);
+        const sectionEl = createSectionElement(sectionData.name, { collapsed: !!sectionData.collapsed });
         sectionsContainer.appendChild(sectionEl);
         sectionMap.set(sectionData.name, sectionEl);
       });
@@ -2043,7 +2089,8 @@
 
     // ---------- Section & item creation ----------
 
-    function createSectionElement(name) {
+    function createSectionElement(name, options = {}) {
+      const { collapsed = false } = options;
       const id = String(sectionIdCounter++);
       const section = document.createElement("section");
       section.className = "section";
@@ -2051,27 +2098,80 @@
 
       section.innerHTML = `
         <div class="section-header">
-          <h2>${name}</h2>
+          <div class="section-title">
+            <button type="button" class="section-toggle-btn" data-role="toggle-section" aria-label="Toggle ${name}" aria-expanded="true">
+              <span class="section-toggle-icon">▾</span>
+            </button>
+            <h2>${name}</h2>
+          </div>
           <div class="section-meta">
+            <button type="button" class="section-delete-btn" data-role="delete-section">Delete</button>
             <button type="button" class="ghost-btn section-save-btn" data-role="save-recipe">Save recipe</button>
             <span class="count" data-role="active-count"></span>
           </div>
         </div>
-        <div class="suggestion-bar" data-role="suggestion-bar" hidden></div>
-        <form class="item-form">
-          <input
-            type="text"
-            class="item-input"
-            placeholder="Add item to ${name}…"
-            autocomplete="off"
-          />
-          <button type="submit">Add</button>
-        </form>
-        <div class="drop-area" data-role="drop-area">
-          Drop items here or drag with the handle
+        <div class="section-body">
+          <div class="suggestion-bar" data-role="suggestion-bar" hidden></div>
+          <form class="item-form">
+            <input
+              type="text"
+              class="item-input"
+              placeholder="Add item to ${name}…"
+              autocomplete="off"
+            />
+            <button type="submit">Add</button>
+          </form>
+          <div class="drop-area" data-role="drop-area">
+            Drop items here or drag with the handle
+          </div>
+          <ul class="active-list"></ul>
         </div>
-        <ul class="active-list"></ul>
       `;
+
+      const toggleBtn = section.querySelector("[data-role='toggle-section']");
+      const sectionBody = section.querySelector(".section-body");
+      const deleteBtn = section.querySelector("[data-role='delete-section']");
+
+      function setCollapsed(nextCollapsed) {
+        section.classList.toggle("collapsed", nextCollapsed);
+        if (sectionBody) {
+          sectionBody.hidden = nextCollapsed;
+        }
+        if (toggleBtn) {
+          toggleBtn.setAttribute("aria-expanded", String(!nextCollapsed));
+        }
+      }
+
+      setCollapsed(collapsed);
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+          const next = !section.classList.contains("collapsed");
+          setCollapsed(next);
+          if (currentMode === "shopping") {
+            saveCurrentListState();
+          }
+        });
+      }
+
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => {
+          const sectionName = section.querySelector("h2")?.textContent || "this section";
+          if (!confirm(`Delete section "${sectionName}"?`)) return;
+
+          completedListEl.querySelectorAll(".item").forEach((item) => {
+            if ((item.dataset.sectionName || "") === sectionName) {
+              item.remove();
+            }
+          });
+
+          section.remove();
+          updateCountsAndEmptyStates();
+          if (currentMode === "shopping") {
+            saveCurrentListState();
+          }
+        });
+      }
 
       const saveRecipeBtn = section.querySelector("[data-role='save-recipe']");
       if (saveRecipeBtn) {
@@ -2227,9 +2327,9 @@
       return sectionEl;
     }
 
-    function addSection(name) {
+    function addSection(name, options = {}) {
       if (!name) return;
-      const section = createSectionElement(name);
+      const section = createSectionElement(name, options);
       sectionsContainer.appendChild(section);
       updateCountsAndEmptyStates();
 
