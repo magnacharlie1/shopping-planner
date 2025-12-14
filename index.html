@@ -204,7 +204,7 @@
       background: #fcfcfd;
     }
 
-    button:not(.icon-btn):not(.list-action-btn) {
+    button:not(.icon-btn):not(.list-action-btn):not(.mode-btn):not(.section-delete-btn):not(.section-save-btn) {
       padding: 0.48rem 0.85rem;
       border-radius: 0.7rem;
       border: 1px solid #e5e7eb;
@@ -2252,7 +2252,7 @@
               </svg>
               <span class="sr-only">Delete section</span>
             </button>
-            <button type="button" class="ghost-btn section-save-btn" data-role="save-recipe">Update</button>
+            <button type="button" class="ghost-btn section-save-btn" data-role="save-recipe">Save</button>
             <span class="count" data-role="active-count"></span>
           </div>
         </div>
@@ -2373,7 +2373,7 @@
       if (!btn) return;
       const sectionName = sectionEl.querySelector("h2")?.textContent || "";
       const hasRecipe = Boolean(findMealByName(sectionName));
-      btn.textContent = hasRecipe ? "Update recipe" : "Save recipe";
+      btn.textContent = hasRecipe ? "Update" : "Save";
     }
 
     function saveSectionAsRecipe(sectionEl) {
