@@ -325,15 +325,11 @@
       align-items: center;
       gap: 0.4rem;
       flex: 1;
+      min-width: 180px;
+    }
+
+    .item-amount-input {
       min-width: 160px;
-    }
-
-    .item-amount-row input[type="number"] {
-      width: 90px;
-    }
-
-    .item-amount-row input[type="text"] {
-      min-width: 120px;
       flex: 1;
     }
 
@@ -1313,7 +1309,7 @@
             }
           });
         }
-        const isCollapsed = section.classList.contains("collapsed");
+        const isCollapsed = sectionEl.classList.contains("collapsed");
         sectionsData.push({ name: sectionName, items, collapsed: isCollapsed });
       });
 
@@ -1776,20 +1772,18 @@
           const meal = savedMeals.find((m) => m.id === mealId);
           if (!meal) return;
           const nameInput = form.querySelector(".ingredient-name-input");
-          const qtyInput = form.querySelector(".ingredient-qty-input");
-          const unitInput = form.querySelector(".ingredient-unit-input");
+          const amountInput = form.querySelector(".ingredient-amount-input");
           const value = nameInput?.value.trim();
           if (!value) return;
           meal.ingredients.push(
             normalizeIngredient({
               name: value,
-              quantity: qtyInput?.value.trim() || "",
-              unit: unitInput?.value.trim() || "",
+              quantity: amountInput?.value.trim() || "",
+              unit: "",
             })
           );
           if (nameInput) nameInput.value = "";
-          if (qtyInput) qtyInput.value = "";
-          if (unitInput) unitInput.value = "";
+          if (amountInput) amountInput.value = "";
           renderMealsList();
           syncMealsToState();
         });
@@ -2237,8 +2231,12 @@
               autocomplete="off"
             />
             <div class="item-amount-row">
-              <input type="text" class="item-qty-input" placeholder="Quantity" autocomplete="off" />
-              <input type="text" class="item-unit-input" placeholder="Unit" autocomplete="off" />
+              <input
+                type="text"
+                class="item-amount-input"
+                placeholder="Quantity & unit (optional)"
+                autocomplete="off"
+              />
             </div>
             <button type="submit">Add</button>
           </form>
@@ -2390,9 +2388,10 @@
 
       const activeList = sectionEl.querySelector(".active-list");
       const hasItems = activeList && activeList.querySelectorAll(".item").length > 0;
+      const isGeneralSection = normalizeSectionName(sectionName) === "general";
       const suggestions = getSuggestionsForSection(sectionName);
 
-      if (!suggestions.length || hasItems) {
+      if (hasItems || (!suggestions.length && !isGeneralSection)) {
         bar.hidden = true;
         bar.innerHTML = "";
         return;
@@ -2400,6 +2399,16 @@
 
       bar.hidden = false;
       bar.innerHTML = "";
+
+      if (isGeneralSection) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "suggestion-chip primary";
+        button.textContent = "Open sundry reminders";
+        button.addEventListener("click", () => openSundryModal());
+        bar.appendChild(button);
+        return;
+      }
 
       const label = document.createElement("span");
       label.textContent = "Suggested:";
@@ -2877,8 +2886,7 @@
         ingredientForm.dataset.mealId = meal.id;
         ingredientForm.innerHTML = `
           <input type="text" class="subtle-input ingredient-name-input" placeholder="Ingredient" autocomplete="off" style="flex:1;">
-          <input type="text" class="subtle-input ingredient-qty-input" placeholder="Quantity" autocomplete="off" style="width:110px;">
-          <input type="text" class="subtle-input ingredient-unit-input" placeholder="Unit" autocomplete="off" style="width:110px;">
+          <input type="text" class="subtle-input ingredient-amount-input" placeholder="Amount (e.g. 2kg)" autocomplete="off" style="min-width:160px;">
           <button type="submit">Add</button>
         `;
 
@@ -2932,13 +2940,12 @@
         const trimmed = nextValue.trim();
         if (!trimmed || !textSpan) return;
 
-        const nextQty = prompt("Quantity", li.dataset.quantity || "");
-        if (nextQty === null) return;
-        const nextUnit = prompt("Unit", li.dataset.unit || "");
-        if (nextUnit === null) return;
+        const currentAmount = formatAmount(li.dataset.quantity, li.dataset.unit);
+        const nextAmount = prompt("Amount (optional)", currentAmount);
+        if (nextAmount === null) return;
 
-        li.dataset.quantity = nextQty.trim();
-        li.dataset.unit = nextUnit.trim();
+        li.dataset.quantity = (nextAmount || "").trim();
+        li.dataset.unit = "";
         textSpan.textContent = trimmed;
 
         const existingBadge = li.querySelector(".item-amount");
@@ -2970,7 +2977,7 @@
       const value = sectionInputEl.value.trim();
       if (!value) return;
       addSection(value);
-      sectionInputEl.value = "";
+      addSectionFormEl.reset();
     });
 
     sectionsContainer.addEventListener("click", handleItemAction);
@@ -2983,18 +2990,16 @@
 
       event.preventDefault();
       const input = form.querySelector(".item-input");
-      const qtyInput = form.querySelector(".item-qty-input");
-      const unitInput = form.querySelector(".item-unit-input");
+      const amountInput = form.querySelector(".item-amount-input");
       const value = input.value.trim();
       if (!value) return;
 
       const sectionEl = form.closest(".section");
       if (!sectionEl) return;
 
-      addItemToSection(sectionEl, value, qtyInput?.value.trim(), unitInput?.value.trim());
-      input.value = "";
-      if (qtyInput) qtyInput.value = "";
-      if (unitInput) unitInput.value = "";
+      const amountValue = amountInput?.value.trim() || "";
+      addItemToSection(sectionEl, value, amountValue, "");
+      form.reset();
       input.focus();
     });
 
