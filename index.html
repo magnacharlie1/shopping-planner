@@ -50,26 +50,6 @@
       position: relative;
     }
 
-    h1 {
-      margin: 0 0 0.2rem;
-      font-size: 1.45rem;
-      letter-spacing: -0.02em;
-    }
-
-    .subtitle {
-      color: #6b7280;
-      margin: 0;
-      font-size: 0.95rem;
-    }
-
-    .header-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 0.75rem;
-      margin-bottom: 0.9rem;
-    }
-
     .settings-icon-btn {
       border-radius: 999px;
       background: #eef2ff;
@@ -89,28 +69,13 @@
       height: 18px;
     }
 
-    /* Auth bar at top of card */
-    .auth-bar {
+    .top-bar {
       display: flex;
-      justify-content: flex-end;
-      gap: 0.6rem;
-      margin-bottom: 0.9rem;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-
-    #user-label {
-      align-self: center;
-    }
-
-    .auth-bar button {
-      padding: 0.35rem 0.7rem;
-      font-size: 0.8rem;
-      background: #f3f4f6;
-      color: #0f172a;
-      border-radius: 999px;
-      border: none;
-      cursor: pointer;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
     }
 
     /* Mode toggle (Shopping / Menu) */
@@ -144,36 +109,82 @@
 
     .list-switcher {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
       align-items: center;
+      gap: 0.45rem;
+      flex: 1;
+      flex-wrap: wrap;
       margin-bottom: 0.75rem;
     }
 
     .list-switcher select {
       flex: 1;
-      min-width: 0;
-      padding: 0.45rem 0.6rem;
+      min-width: 180px;
+      max-width: 260px;
+      padding: 0.4rem 0.55rem;
       border-radius: 0.75rem;
       border: 1px solid #d4d4d8;
-      font-size: 0.93rem;
+      font-size: 0.9rem;
       background: #fff;
     }
 
-    .list-switcher button {
-      padding: 0.35rem 0.65rem;
+    .icon-btn {
+      padding: 0.4rem 0.55rem;
       border-radius: 0.6rem;
-      border: none;
-      font-size: 0.8rem;
-      cursor: pointer;
-      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      background: #f8fafc;
       color: #0f172a;
-      white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
     }
 
-    .list-switcher button.primary {
-      background: linear-gradient(135deg, #4f46e5, #2563eb);
-      color: white;
+    .icon-btn svg,
+    .icon-btn span {
+      pointer-events: none;
+    }
+
+    .list-actions {
+      position: relative;
+    }
+
+    .list-actions-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 0.35rem);
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+      padding: 0.35rem;
+      min-width: 150px;
+      display: none;
+      flex-direction: column;
+      gap: 0.3rem;
+      z-index: 5;
+    }
+
+    .list-actions-menu.open {
+      display: flex;
+    }
+
+    .list-action-btn {
+      width: 100%;
+      text-align: left;
+      background: #f8fafc;
+      color: #0f172a;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.6rem;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .list-action-btn.destructive {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #b91c1c;
     }
 
     .top-form {
@@ -191,7 +202,7 @@
       background: #fcfcfd;
     }
 
-    button {
+    button:not(.icon-btn):not(.list-action-btn) {
       padding: 0.55rem 0.9rem;
       border-radius: 0.75rem;
       border: none;
@@ -863,9 +874,8 @@
         width: 42px;
       }
 
-      .auth-bar {
-        justify-content: center;
-        flex-wrap: wrap;
+      .top-bar {
+        gap: 0.5rem;
       }
 
       .mode-toggle {
@@ -873,17 +883,7 @@
       }
 
       .list-switcher {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .list-switcher select {
         width: 100%;
-      }
-
-      .list-switcher button {
-        width: 100%;
-        justify-content: center;
       }
 
       .top-form {
@@ -925,17 +925,23 @@
 </head>
 <body>
   <div class="app">
-    <div id="auth-bar" class="auth-bar">
-      <span id="user-label"></span>
-      <button id="login-btn" type="button">Log in</button>
-      <button id="logout-btn" type="button" style="display:none;">Log out</button>
-      <button id="test-api-btn" type="button" style="display:none;">Test API</button>
-    </div>
-
-    <div class="header-row">
-      <div>
-        <h1>Shopping Planner</h1>
-        <p class="subtitle">Built for fast on-the-go shopping — drag items with the handle or tap sections to keep things tidy.</p>
+    <div class="top-bar">
+      <div class="list-switcher">
+        <select id="list-select"></select>
+        <button id="new-list-btn" type="button" class="icon-btn" aria-label="Add list">
+          <span aria-hidden="true">+</span>
+        </button>
+        <div class="list-actions">
+          <button id="list-actions-toggle" type="button" class="icon-btn" aria-haspopup="true" aria-expanded="false" aria-label="List actions">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div id="list-actions-menu" class="list-actions-menu" hidden>
+            <button id="rename-list-btn" type="button" class="list-action-btn">Rename list</button>
+            <button id="delete-list-btn" type="button" class="list-action-btn destructive">Delete list</button>
+          </div>
+        </div>
       </div>
       <button id="settings-icon-btn" type="button" class="settings-icon-btn" aria-label="Open settings">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -949,14 +955,6 @@
     <div id="mode-toggle" class="mode-toggle">
       <button type="button" class="mode-btn active" data-mode="shopping">Shopping</button>
       <button type="button" class="mode-btn" data-mode="menu">Menu</button>
-    </div>
-
-    <!-- List selector / manager -->
-    <div class="list-switcher">
-      <select id="list-select"></select>
-      <button id="new-list-btn" type="button" class="primary">New list</button>
-      <button id="rename-list-btn" type="button">Rename</button>
-      <button id="delete-list-btn" type="button">Delete</button>
     </div>
 
     <!-- Add section (e.g. Monday, BBQ, Meal prep) -->
@@ -1100,6 +1098,8 @@
 
     const listSelectEl = document.getElementById("list-select");
     const newListBtn = document.getElementById("new-list-btn");
+    const listActionsToggle = document.getElementById("list-actions-toggle");
+    const listActionsMenu = document.getElementById("list-actions-menu");
     const renameListBtn = document.getElementById("rename-list-btn");
     const deleteListBtn = document.getElementById("delete-list-btn");
 
@@ -1129,9 +1129,6 @@
     const drawerLogoutBtn = document.getElementById("drawer-logout-btn");
     const drawerTestApiBtn = document.getElementById("drawer-test-api-btn");
     const settingsIconBtn = document.getElementById("settings-icon-btn");
-    const loginBtn = document.getElementById("login-btn");
-    const logoutBtn = document.getElementById("logout-btn");
-    const testApiBtn = document.getElementById("test-api-btn");
 
     const appEl = document.querySelector(".app");
     const modeToggleEl = document.getElementById("mode-toggle");
@@ -1588,6 +1585,28 @@
         renderList(newId);
       });
 
+      const closeListActionsMenu = () => {
+        if (!listActionsMenu || !listActionsToggle) return;
+        listActionsMenu.classList.remove("open");
+        listActionsMenu.hidden = true;
+        listActionsToggle.setAttribute("aria-expanded", "false");
+      };
+
+      if (listActionsToggle && listActionsMenu) {
+        listActionsToggle.addEventListener("click", () => {
+          const willOpen = listActionsMenu.hidden;
+          listActionsMenu.hidden = !willOpen;
+          listActionsMenu.classList.toggle("open", willOpen);
+          listActionsToggle.setAttribute("aria-expanded", willOpen.toString());
+        });
+
+        document.addEventListener("click", (event) => {
+          if (listActionsMenu.hidden) return;
+          if (event.target.closest(".list-actions")) return;
+          closeListActionsMenu();
+        });
+      }
+
       newListBtn.addEventListener("click", () => {
         const nameInput = prompt("Name for new list:", "New list");
         if (nameInput === null) return;
@@ -1609,6 +1628,7 @@
       });
 
       renameListBtn.addEventListener("click", () => {
+        closeListActionsMenu();
         if (!appState.currentListId) return;
         const current = appState.lists[appState.currentListId];
         if (!current) return;
@@ -1622,6 +1642,7 @@
       });
 
       deleteListBtn.addEventListener("click", () => {
+        closeListActionsMenu();
         if (!appState.currentListId) return;
         const current = appState.lists[appState.currentListId];
         if (!current) return;
@@ -1819,26 +1840,6 @@
         drawerRecipesBtn.addEventListener("click", goToMeals);
       }
 
-      if (drawerLoginBtn && loginBtn) {
-        drawerLoginBtn.addEventListener("click", () => {
-          closeSettingsDrawer();
-          loginBtn.click();
-        });
-      }
-
-      if (drawerLogoutBtn && logoutBtn) {
-        drawerLogoutBtn.addEventListener("click", () => {
-          closeSettingsDrawer();
-          logoutBtn.click();
-        });
-      }
-
-      if (drawerTestApiBtn && testApiBtn) {
-        drawerTestApiBtn.addEventListener("click", () => {
-          closeSettingsDrawer();
-          testApiBtn.click();
-        });
-      }
     }
 
     // Server data functions
@@ -3056,28 +3057,26 @@
     const AUTH0_DOMAIN = "dev-ep1kkf5cbz6dcdgn.us.auth0.com";          // e.g. "dev-abc123.eu.auth0.com"
     const AUTH0_CLIENT_ID = "siGMrsujybw4rQaZEgZssLXYEVoPi7AD";    // from your SPA application's settings
     const AUTH0_AUDIENCE = "https://shopping-planner-api"; // the API Identifier you created
-  
+
     let auth0Client = null;
     let currentUser = null;
-  
+
     function updateAuthBar() {
-      const userLabel = document.getElementById("user-label");
-      const loginBtn = document.getElementById("login-btn");
-      const logoutBtn = document.getElementById("logout-btn");
-      const testApiBtn = document.getElementById("test-api-btn");
-  
-      if (!userLabel || !loginBtn || !logoutBtn || !testApiBtn) return;
-  
-      if (currentUser) {
-        userLabel.textContent = `Logged in as ${currentUser.email || "User"}`;
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-        testApiBtn.style.display = "inline-block";
-      } else {
-        userLabel.textContent = "";
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-        testApiBtn.style.display = "none";
+      const drawerLoginBtn = document.getElementById("drawer-login-btn");
+      const drawerLogoutBtn = document.getElementById("drawer-logout-btn");
+      const drawerTestApiBtn = document.getElementById("drawer-test-api-btn");
+      const isAuthed = Boolean(currentUser);
+
+      if (drawerLoginBtn) {
+        drawerLoginBtn.style.display = isAuthed ? "none" : "block";
+      }
+
+      if (drawerLogoutBtn) {
+        drawerLogoutBtn.style.display = isAuthed ? "block" : "none";
+      }
+
+      if (drawerTestApiBtn) {
+        drawerTestApiBtn.style.display = isAuthed ? "block" : "none";
       }
     }
   
@@ -3116,10 +3115,24 @@
         currentUser = null;
         window.currentUser = null;
       }
-  
+
       updateAuthBar();
     }
-  
+
+    async function loginWithAuth0() {
+      if (!auth0Client) return;
+      await auth0Client.loginWithRedirect();
+    }
+
+    async function logoutWithAuth0() {
+      if (!auth0Client) return;
+      await auth0Client.logout({
+        logoutParams: {
+          returnTo: window.location.origin
+        }
+      });
+    }
+
     async function getAuthToken() {
       if (!auth0Client) return null;
       const isAuthenticated = await auth0Client.isAuthenticated();
@@ -3162,28 +3175,38 @@
         alert("Error calling API – see console.");
       }
     }
-  
+
     function setupAuthUI() {
-      const loginBtn = document.getElementById("login-btn");
-      const logoutBtn = document.getElementById("logout-btn");
-      const testApiBtn = document.getElementById("test-api-btn");
-  
-      if (!loginBtn || !logoutBtn || !testApiBtn) return;
-  
-      loginBtn.addEventListener("click", async () => {
-        // redirect to Auth0's hosted login page
-        await auth0Client.loginWithRedirect();
-      });
-  
-      logoutBtn.addEventListener("click", async () => {
-        await auth0Client.logout({
-          logoutParams: {
-            returnTo: window.location.origin
-          }
+      const drawerLoginBtn = document.getElementById("drawer-login-btn");
+      const drawerLogoutBtn = document.getElementById("drawer-logout-btn");
+      const drawerTestApiBtn = document.getElementById("drawer-test-api-btn");
+
+      const closeDrawerIfOpen = () => {
+        if (typeof closeSettingsDrawer === "function") {
+          closeSettingsDrawer();
+        }
+      };
+
+      if (drawerLoginBtn) {
+        drawerLoginBtn.addEventListener("click", async () => {
+          closeDrawerIfOpen();
+          await loginWithAuth0();
         });
-      });
-  
-      testApiBtn.addEventListener("click", testApiCall);
+      }
+
+      if (drawerLogoutBtn) {
+        drawerLogoutBtn.addEventListener("click", async () => {
+          closeDrawerIfOpen();
+          await logoutWithAuth0();
+        });
+      }
+
+      if (drawerTestApiBtn) {
+        drawerTestApiBtn.addEventListener("click", () => {
+          closeDrawerIfOpen();
+          testApiCall();
+        });
+      }
     }
   
     // Initialise Auth0 + wire buttons once the page is loaded
