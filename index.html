@@ -204,7 +204,7 @@
       background: #fcfcfd;
     }
 
-    button:not(.icon-btn):not(.list-action-btn):not(.mode-btn):not(.section-delete-btn):not(.section-save-btn) {
+    button:not(.icon-btn):not(.list-action-btn):not(.mode-btn):not(.section-delete-btn) {
       padding: 0.48rem 0.85rem;
       border-radius: 0.7rem;
       border: 1px solid #e5e7eb;
@@ -312,12 +312,17 @@
       border-radius: 10px;
     }
 
+    .section-delete-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+    }
+
     .section-save-btn {
-      background: #eef2ff;
-      color: #1f2937;
-      border: 1px solid #e0e7ff;
-      padding: 0.32rem 0.55rem;
-      font-size: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      height: 38px;
     }
 
     .count {
@@ -2228,6 +2233,7 @@
 
     function createSectionElement(name, options = {}) {
       const { collapsed = false } = options;
+      const isGeneralSection = normalizeSectionName(name) === "general";
       const id = String(sectionIdCounter++);
       const section = document.createElement("section");
       section.className = "section";
@@ -2242,7 +2248,9 @@
             <h2>${name}</h2>
           </div>
           <div class="section-meta">
-            <button type="button" class="section-delete-btn" data-role="delete-section" aria-label="Delete section">
+            ${
+              !isGeneralSection
+                ? `<button type="button" class="section-delete-btn" data-role="delete-section" aria-label="Delete section">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M3 6h18" />
                 <path d="M8 6v14c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V6" />
@@ -2251,8 +2259,10 @@
                 <path d="M10 6V4c0-.55.45-1 1-1h2c.55 0 1 .45 1 1v2" />
               </svg>
               <span class="sr-only">Delete section</span>
-            </button>
-            <button type="button" class="ghost-btn section-save-btn" data-role="save-recipe">Save</button>
+            </button>`
+                : ""
+            }
+            ${!isGeneralSection ? '<button type="button" class="section-save-btn" data-role="save-recipe">Save</button>' : ""}
             <span class="count" data-role="active-count"></span>
           </div>
         </div>
