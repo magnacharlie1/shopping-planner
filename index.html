@@ -1176,17 +1176,33 @@
       {
         id: "meal-1",
         name: "Taco night",
-        ingredients: ["Tortillas", "Ground beef", "Salsa", "Cheese", "Lettuce"],
+        ingredients: [
+          { name: "Tortillas", quantity: "", unit: "" },
+          { name: "Ground beef", quantity: "", unit: "" },
+          { name: "Salsa", quantity: "", unit: "" },
+          { name: "Cheese", quantity: "", unit: "" },
+          { name: "Lettuce", quantity: "", unit: "" },
+        ],
       },
       {
         id: "meal-2",
         name: "Pasta and greens",
-        ingredients: ["Pasta", "Pesto", "Cherry tomatoes", "Spinach"],
+        ingredients: [
+          { name: "Pasta", quantity: "", unit: "" },
+          { name: "Pesto", quantity: "", unit: "" },
+          { name: "Cherry tomatoes", quantity: "", unit: "" },
+          { name: "Spinach", quantity: "", unit: "" },
+        ],
       },
       {
         id: "meal-3",
         name: "Stir fry",
-        ingredients: ["Noodles", "Soy sauce", "Mixed veg", "Tofu"],
+        ingredients: [
+          { name: "Noodles", quantity: "", unit: "" },
+          { name: "Soy sauce", quantity: "", unit: "" },
+          { name: "Mixed veg", quantity: "", unit: "" },
+          { name: "Tofu", quantity: "", unit: "" },
+        ],
       },
     ];
 
@@ -1262,7 +1278,9 @@
       savedMeals = appState.savedMeals.map((meal, index) => ({
         id: meal.id || `meal-${index}-${Date.now()}`,
         name: meal.name || "Untitled meal",
-        ingredients: Array.isArray(meal.ingredients) ? [...meal.ingredients] : [],
+        ingredients: Array.isArray(meal.ingredients)
+          ? meal.ingredients.map((ing) => normalizeIngredient(ing))
+          : [],
       }));
     }
 
@@ -1757,11 +1775,21 @@
           const mealId = form.dataset.mealId;
           const meal = savedMeals.find((m) => m.id === mealId);
           if (!meal) return;
-          const input = form.querySelector("input");
-          const value = input?.value.trim();
+          const nameInput = form.querySelector(".ingredient-name-input");
+          const qtyInput = form.querySelector(".ingredient-qty-input");
+          const unitInput = form.querySelector(".ingredient-unit-input");
+          const value = nameInput?.value.trim();
           if (!value) return;
-          meal.ingredients.push(value);
-          input.value = "";
+          meal.ingredients.push(
+            normalizeIngredient({
+              name: value,
+              quantity: qtyInput?.value.trim() || "",
+              unit: unitInput?.value.trim() || "",
+            })
+          );
+          if (nameInput) nameInput.value = "";
+          if (qtyInput) qtyInput.value = "";
+          if (unitInput) unitInput.value = "";
           renderMealsList();
           syncMealsToState();
         });
@@ -2209,7 +2237,7 @@
               autocomplete="off"
             />
             <div class="item-amount-row">
-              <input type="number" class="item-qty-input" placeholder="Qty" min="0" step="0.1" />
+              <input type="text" class="item-qty-input" placeholder="Quantity" autocomplete="off" />
               <input type="text" class="item-unit-input" placeholder="Unit" autocomplete="off" />
             </div>
             <button type="submit">Add</button>
@@ -2287,18 +2315,24 @@
 
     function collectSectionItems(sectionEl) {
       if (!sectionEl) return [];
-      const active = [...sectionEl.querySelectorAll(".active-list .item-text")]
-        .map((el) => el.textContent?.trim())
-        .filter(Boolean);
-
       const sectionId = sectionEl.dataset.sectionId;
+      const activeItems = [...sectionEl.querySelectorAll(".active-list .item")];
       const completedItems = sectionId
-        ? [...completedListEl.querySelectorAll(`.item[data-section-id="${sectionId}"] .item-text`)]
-            .map((el) => el.textContent?.trim())
-            .filter(Boolean)
+        ? [...completedListEl.querySelectorAll(`.item[data-section-id="${sectionId}"]`)]
         : [];
 
-      return [...new Set([...active, ...completedItems])];
+      return [...activeItems, ...completedItems]
+        .map((li) => {
+          const textEl = li.querySelector(".item-text");
+          const name = textEl?.textContent?.trim() || "";
+          if (!name) return null;
+          return normalizeIngredient({
+            name,
+            quantity: li.dataset.quantity || "",
+            unit: li.dataset.unit || "",
+          });
+        })
+        .filter(Boolean);
     }
 
     function refreshSectionRecipeButton(sectionEl) {
@@ -2314,7 +2348,7 @@
       const sectionName = sectionEl.querySelector("h2")?.textContent || "";
       if (!sectionName) return;
 
-      const ingredients = collectSectionItems(sectionEl);
+      const ingredients = collectSectionItems(sectionEl).map((ing) => normalizeIngredient(ing));
       const existing = findMealByName(sectionName);
 
       if (existing) {
@@ -2327,7 +2361,9 @@
         });
       }
 
-      appState.sectionSuggestions[normalizeSectionName(sectionName)] = [...ingredients];
+      appState.sectionSuggestions[normalizeSectionName(sectionName)] = ingredients
+        .map((ing) => ing.name)
+        .filter(Boolean);
 
       refreshSectionRecipeButton(sectionEl);
       renderMealsList();
@@ -2338,8 +2374,10 @@
     function getSuggestionsForSection(sectionName) {
       const key = normalizeSectionName(sectionName);
       const recipe = findMealByName(sectionName);
-      const recipeIngredients = recipe ? recipe.ingredients : [];
-      const learned = appState?.sectionSuggestions?.[key] || [];
+      const recipeIngredients = recipe
+        ? (recipe.ingredients || []).map((ing) => normalizeIngredient(ing).name).filter(Boolean)
+        : [];
+      const learned = (appState?.sectionSuggestions?.[key] || []).map((ing) => normalizeIngredient(ing).name).filter(Boolean);
       const base = BASE_SECTION_SUGGESTIONS[key] || [];
       const primary = recipeIngredients.length ? recipeIngredients : learned;
       return [...new Set([...(primary || []), ...base])];
@@ -2440,6 +2478,18 @@
       if (!isRestoring) {
         renderSectionSuggestions(section, name);
       }
+    }
+
+    function normalizeIngredient(entry) {
+      if (typeof entry === "string") {
+        return { name: entry, quantity: "", unit: "" };
+      }
+
+      return {
+        name: entry?.name || entry?.text || "",
+        quantity: entry?.quantity || "",
+        unit: entry?.unit || "",
+      };
     }
 
     function formatAmount(quantity, unit) {
@@ -2576,10 +2626,7 @@
       const fragment = document.createDocumentFragment();
 
       items.forEach((entry) => {
-        const normalized =
-          typeof entry === "string"
-            ? { name: entry, quantity: "", unit: "" }
-            : entry;
+        const normalized = normalizeIngredient(entry);
         const li = createItemElement(
           normalized.name || normalized.text || "",
           sectionName,
@@ -2712,12 +2759,14 @@
       appState.savedMeals = savedMeals.map((meal) => ({
         id: meal.id,
         name: meal.name,
-        ingredients: [...meal.ingredients],
+        ingredients: meal.ingredients.map((ing) => normalizeIngredient(ing)),
       }));
       const suggestionCopy = {};
       savedMeals.forEach((meal) => {
         const key = normalizeSectionName(meal.name);
-        suggestionCopy[key] = [...meal.ingredients];
+        suggestionCopy[key] = meal.ingredients
+          .map((ing) => normalizeIngredient(ing).name)
+          .filter(Boolean);
       });
       appState.sectionSuggestions = suggestionCopy;
       saveAppState();
@@ -2781,14 +2830,44 @@
         list.className = "ingredient-list";
 
         meal.ingredients.forEach((ingredient, index) => {
+          const normalized = normalizeIngredient(ingredient);
           const item = document.createElement("li");
-          item.textContent = ingredient;
+          item.style.display = "flex";
+          item.style.alignItems = "center";
+          item.style.gap = "0.5rem";
+
+          const textGroup = document.createElement("div");
+          textGroup.style.display = "flex";
+          textGroup.style.alignItems = "center";
+          textGroup.style.gap = "0.45rem";
+          textGroup.style.flex = "1";
+
+          const nameSpan = document.createElement("span");
+          nameSpan.textContent = normalized.name;
+          nameSpan.style.fontWeight = "500";
+          textGroup.appendChild(nameSpan);
+
+          const amount = formatAmount(normalized.quantity, normalized.unit);
+          if (amount) {
+            const badge = document.createElement("span");
+            badge.textContent = amount;
+            badge.style.background = "#eef2ff";
+            badge.style.border = "1px solid #e0e7ff";
+            badge.style.color = "#1f2937";
+            badge.style.padding = "0.15rem 0.45rem";
+            badge.style.borderRadius = "10px";
+            badge.style.fontSize = "0.85rem";
+            textGroup.appendChild(badge);
+          }
+
           const removeBtn = document.createElement("button");
           removeBtn.type = "button";
           removeBtn.textContent = "Remove";
           removeBtn.className = "item-action-btn";
           removeBtn.dataset.mealAction = "remove-ingredient";
           removeBtn.dataset.ingredientIndex = String(index);
+
+          item.appendChild(textGroup);
           item.appendChild(removeBtn);
           list.appendChild(item);
         });
@@ -2797,7 +2876,9 @@
         ingredientForm.className = "item-form";
         ingredientForm.dataset.mealId = meal.id;
         ingredientForm.innerHTML = `
-          <input type="text" class="subtle-input" placeholder="Add ingredient" autocomplete="off" style="flex:1;">
+          <input type="text" class="subtle-input ingredient-name-input" placeholder="Ingredient" autocomplete="off" style="flex:1;">
+          <input type="text" class="subtle-input ingredient-qty-input" placeholder="Quantity" autocomplete="off" style="width:110px;">
+          <input type="text" class="subtle-input ingredient-unit-input" placeholder="Unit" autocomplete="off" style="width:110px;">
           <button type="submit">Add</button>
         `;
 
@@ -2851,7 +2932,7 @@
         const trimmed = nextValue.trim();
         if (!trimmed || !textSpan) return;
 
-        const nextQty = prompt("Amount (number)", li.dataset.quantity || "");
+        const nextQty = prompt("Quantity", li.dataset.quantity || "");
         if (nextQty === null) return;
         const nextUnit = prompt("Unit", li.dataset.unit || "");
         if (nextUnit === null) return;
