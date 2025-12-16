@@ -171,6 +171,16 @@
       display: flex;
     }
 
+    .section-actions {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .section-actions-menu {
+      min-width: 160px;
+    }
+
     .list-action-btn {
       width: 100%;
       text-align: left;
@@ -1173,6 +1183,33 @@
 
     const dropIndicator = document.createElement("li");
     dropIndicator.className = "drop-indicator";
+
+    function closeSectionMenu(menu) {
+      if (!menu) return;
+      menu.classList.remove("open");
+      menu.hidden = true;
+      const toggle = menu.closest(".section-actions")?.querySelector("[data-role='section-actions-toggle']");
+      if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    }
+
+    function closeAllSectionMenus(exceptMenu) {
+      document.querySelectorAll(".section-actions-menu").forEach((menu) => {
+        if (menu === exceptMenu) return;
+        closeSectionMenu(menu);
+      });
+    }
+
+    document.addEventListener("click", (event) => {
+      document.querySelectorAll(".section-actions-menu").forEach((menu) => {
+        if (menu.hidden) return;
+        const wrapper = menu.closest(".section-actions");
+        const toggle = wrapper?.querySelector("[data-role='section-actions-toggle']");
+        if (menu.contains(event.target) || toggle?.contains(event.target)) return;
+        closeSectionMenu(menu);
+      });
+    });
 
     // Persistence state
     const STORAGE_KEY = "shoppingPlannerLists_v1";
@@ -2248,22 +2285,22 @@
             <h2>${name}</h2>
           </div>
           <div class="section-meta">
+            <span class="count" data-role="active-count"></span>
             ${
               !isGeneralSection
-                ? `<button type="button" class="section-delete-btn" data-role="delete-section" aria-label="Delete section">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18" />
-                <path d="M8 6v14c0 .55.45 1 1 1h6c.55 0 1-.45 1-1V6" />
-                <path d="M10 11v6" />
-                <path d="M14 11v6" />
-                <path d="M10 6V4c0-.55.45-1 1-1h2c.55 0 1 .45 1 1v2" />
-              </svg>
-              <span class="sr-only">Delete section</span>
-            </button>`
+                ? `<div class="list-actions section-actions">
+              <button type="button" class="icon-btn" data-role="section-actions-toggle" aria-haspopup="true" aria-expanded="false" aria-label="Section actions">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <div class="list-actions-menu section-actions-menu" data-role="section-actions-menu" hidden>
+                <button type="button" class="list-action-btn" data-role="save-recipe">Save</button>
+                <button type="button" class="list-action-btn destructive" data-role="delete-section">Delete section</button>
+              </div>
+            </div>`
                 : ""
             }
-            ${!isGeneralSection ? '<button type="button" class="section-save-btn" data-role="save-recipe">Save</button>' : ""}
-            <span class="count" data-role="active-count"></span>
           </div>
         </div>
         <div class="section-body">
@@ -2294,6 +2331,8 @@
 
       const toggleBtn = section.querySelector("[data-role='toggle-section']");
       const sectionBody = section.querySelector(".section-body");
+      const actionsToggle = section.querySelector("[data-role='section-actions-toggle']");
+      const actionsMenu = section.querySelector("[data-role='section-actions-menu']");
       const deleteBtn = section.querySelector("[data-role='delete-section']");
 
       function setCollapsed(nextCollapsed) {
@@ -2318,8 +2357,20 @@
         });
       }
 
+      if (actionsToggle && actionsMenu) {
+        actionsToggle.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const willOpen = actionsMenu.hidden;
+          closeAllSectionMenus(actionsMenu);
+          actionsMenu.hidden = !willOpen;
+          actionsMenu.classList.toggle("open", willOpen);
+          actionsToggle.setAttribute("aria-expanded", willOpen.toString());
+        });
+      }
+
       if (deleteBtn) {
         deleteBtn.addEventListener("click", () => {
+          closeSectionMenu(actionsMenu);
           const sectionName = section.querySelector("h2")?.textContent || "this section";
           if (!confirm(`Delete section "${sectionName}"?`)) return;
 
@@ -2339,7 +2390,10 @@
 
       const saveRecipeBtn = section.querySelector("[data-role='save-recipe']");
       if (saveRecipeBtn) {
-        saveRecipeBtn.addEventListener("click", () => saveSectionAsRecipe(section));
+        saveRecipeBtn.addEventListener("click", () => {
+          closeSectionMenu(actionsMenu);
+          saveSectionAsRecipe(section);
+        });
       }
 
       refreshSectionRecipeButton(section);
