@@ -130,8 +130,10 @@
     }
 
     .icon-btn {
-      padding: 0.4rem 0.55rem;
-      border-radius: 0.6rem;
+      padding: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
       border: 1px solid #e5e7eb;
       background: #f8fafc;
       color: #0f172a;
@@ -145,6 +147,28 @@
     .icon-btn svg,
     .icon-btn span {
       pointer-events: none;
+    }
+
+    .form-toggle-btn {
+      font-size: 1.35rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #f8fafc, #eef2ff);
+      border-color: #e0e7ff;
+      color: #1f2937;
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.12);
+    }
+
+    .form-toggle-btn:hover {
+      border-color: #cbd5e1;
+      background: linear-gradient(135deg, #eef2ff, #e5e7eb);
+    }
+
+    .form-fields {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex: 1;
+      flex-wrap: wrap;
     }
 
     .list-actions {
@@ -203,6 +227,15 @@
       display: flex;
       gap: 0.65rem;
       margin-bottom: 1.1rem;
+      align-items: center;
+    }
+
+    .top-form.collapsed {
+      margin-bottom: 0.6rem;
+    }
+
+    .top-form.collapsed .form-fields {
+      display: none;
     }
 
     input[type="text"] {
@@ -345,7 +378,15 @@
       gap: 0.45rem;
       margin-bottom: 0.4rem;
       align-items: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+    }
+
+    .item-form.collapsed {
+      margin-bottom: 0.15rem;
+    }
+
+    .item-form.collapsed .form-fields {
+      display: none;
     }
 
     .item-form input[type="text"],
@@ -913,6 +954,11 @@
         width: 42px;
       }
 
+      .icon-btn {
+        width: 42px;
+        height: 42px;
+      }
+
       .top-bar {
         gap: 0.5rem;
       }
@@ -998,14 +1044,26 @@
     </div>
 
     <!-- Add section (e.g. Monday, BBQ, Meal prep) -->
-    <form id="add-section-form" class="top-form">
-      <input
-        id="section-input"
-        type="text"
-        placeholder="Add section (e.g. Monday, BBQ)…"
-        autocomplete="off"
-      />
-      <button type="submit">Add section</button>
+    <form id="add-section-form" class="top-form collapsed">
+      <button
+        type="button"
+        class="icon-btn form-toggle-btn"
+        id="section-form-toggle"
+        aria-expanded="false"
+        aria-controls="section-form-fields"
+        aria-label="Toggle section form"
+      >
+        <span aria-hidden="true">+</span>
+      </button>
+      <div id="section-form-fields" class="form-fields">
+        <input
+          id="section-input"
+          type="text"
+          placeholder="Add section (e.g. Monday, BBQ)…"
+          autocomplete="off"
+        />
+        <button type="submit">Add section</button>
+      </div>
     </form>
 
     <div class="lists">
@@ -1130,6 +1188,7 @@
     const sectionsContainer = document.getElementById("sections");
     const addSectionFormEl = document.getElementById("add-section-form");
     const sectionInputEl = document.getElementById("section-input");
+    const sectionFormToggleBtn = document.getElementById("section-form-toggle");
 
     const completedListEl = document.getElementById("completed-list");
     const completedCountEl = document.getElementById("completed-count");
@@ -1183,6 +1242,25 @@
 
     const dropIndicator = document.createElement("li");
     dropIndicator.className = "drop-indicator";
+
+    let isSectionFormExpanded = false;
+
+    function setSectionFormExpanded(expanded) {
+      isSectionFormExpanded = expanded;
+      addSectionFormEl?.classList.toggle("collapsed", !expanded);
+      sectionFormToggleBtn?.setAttribute("aria-expanded", expanded.toString());
+      if (expanded) {
+        requestAnimationFrame(() => sectionInputEl?.focus());
+      }
+    }
+
+    setSectionFormExpanded(false);
+
+    if (sectionFormToggleBtn) {
+      sectionFormToggleBtn.addEventListener("click", () => {
+        setSectionFormExpanded(!isSectionFormExpanded);
+      });
+    }
 
     function closeSectionMenu(menu) {
       if (!menu) return;
@@ -2305,22 +2383,34 @@
         </div>
         <div class="section-body">
           <div class="suggestion-bar" data-role="suggestion-bar" hidden></div>
-          <form class="item-form">
-            <input
-              type="text"
-              class="item-input"
-              placeholder="Add item to ${name}…"
-              autocomplete="off"
-            />
-            <div class="item-amount-row">
+          <form class="item-form collapsed" data-role="item-form">
+            <button
+              type="button"
+              class="icon-btn form-toggle-btn"
+              data-role="item-form-toggle"
+              aria-label="Toggle add item form for ${name}"
+              aria-expanded="false"
+              aria-controls="item-form-fields-${id}"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
+            <div class="form-fields item-form-fields" id="item-form-fields-${id}">
               <input
                 type="text"
-                class="item-amount-input"
-                placeholder="Quantity & unit (optional)"
+                class="item-input"
+                placeholder="Add item to ${name}…"
                 autocomplete="off"
               />
+              <div class="item-amount-row">
+                <input
+                  type="text"
+                  class="item-amount-input"
+                  placeholder="Quantity & unit (optional)"
+                  autocomplete="off"
+                />
+              </div>
+              <button type="submit">Add</button>
             </div>
-            <button type="submit">Add</button>
           </form>
           <div class="drop-area" data-role="drop-area">
             Drop items here or drag with the handle
@@ -2334,6 +2424,8 @@
       const actionsToggle = section.querySelector("[data-role='section-actions-toggle']");
       const actionsMenu = section.querySelector("[data-role='section-actions-menu']");
       const deleteBtn = section.querySelector("[data-role='delete-section']");
+      const itemForm = section.querySelector("[data-role='item-form']");
+      const itemFormToggle = section.querySelector("[data-role='item-form-toggle']");
 
       function setCollapsed(nextCollapsed) {
         section.classList.toggle("collapsed", nextCollapsed);
@@ -2346,6 +2438,24 @@
       }
 
       setCollapsed(collapsed);
+
+      function setItemFormExpanded(expanded) {
+        itemForm?.classList.toggle("collapsed", !expanded);
+        itemFormToggle?.setAttribute("aria-expanded", expanded.toString());
+        if (expanded) {
+          const inputEl = itemForm?.querySelector(".item-input");
+          requestAnimationFrame(() => inputEl?.focus());
+        }
+      }
+
+      setItemFormExpanded(false);
+
+      if (itemFormToggle) {
+        itemFormToggle.addEventListener("click", () => {
+          const shouldExpand = itemForm?.classList.contains("collapsed");
+          setItemFormExpanded(shouldExpand);
+        });
+      }
 
       if (toggleBtn) {
         toggleBtn.addEventListener("click", () => {
