@@ -743,6 +743,12 @@
       margin-top: 0.4rem;
     }
 
+    .stacked-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -1154,6 +1160,57 @@
     </div>
   </div>
 
+  <div id="add-modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
+    <div class="modal">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.6rem;">
+        <div>
+          <h3 id="add-modal-title">Add item</h3>
+          <p id="add-modal-description">Drop a new item into your list.</p>
+        </div>
+        <button id="close-add-modal" type="button" class="ghost-btn" aria-label="Close add dialog">Close</button>
+      </div>
+
+      <form id="add-modal-form">
+        <div id="add-modal-section-fields" class="modal-section stacked-inputs">
+          <label for="add-modal-section-input" style="font-weight:600;">Section name</label>
+          <input
+            id="add-modal-section-input"
+            type="text"
+            class="subtle-input"
+            placeholder="e.g. Monday, BBQ, Meal prep"
+            autocomplete="off"
+          />
+        </div>
+
+        <div id="add-modal-item-fields" class="modal-section stacked-inputs">
+          <div>
+            <label for="add-modal-item-input" style="font-weight:600;">Item</label>
+            <p id="add-modal-context" style="margin:0.15rem 0 0; color:#6b7280; font-size:0.9rem;"></p>
+          </div>
+          <input
+            id="add-modal-item-input"
+            type="text"
+            class="subtle-input"
+            placeholder="What do you need to add?"
+            autocomplete="off"
+          />
+          <input
+            id="add-modal-quantity-input"
+            type="text"
+            class="subtle-input"
+            placeholder="Quantity & unit (optional)"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="dual-actions" style="justify-content:flex-end;">
+          <button id="add-modal-cancel" type="button" class="ghost-btn">Cancel</button>
+          <button id="add-modal-submit" type="submit">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="drawer-backdrop" class="drawer-backdrop"></div>
   <aside id="settings-drawer" class="side-drawer" aria-label="Settings drawer">
     <div class="drawer-header">
@@ -1218,6 +1275,20 @@
     const newMealInput = document.getElementById("new-meal-input");
     const mealsListEl = document.getElementById("meals-list");
 
+    const addModalBackdrop = document.getElementById("add-modal-backdrop");
+    const addModalForm = document.getElementById("add-modal-form");
+    const addModalTitle = document.getElementById("add-modal-title");
+    const addModalDescription = document.getElementById("add-modal-description");
+    const addModalSectionFields = document.getElementById("add-modal-section-fields");
+    const addModalSectionInput = document.getElementById("add-modal-section-input");
+    const addModalItemFields = document.getElementById("add-modal-item-fields");
+    const addModalItemInput = document.getElementById("add-modal-item-input");
+    const addModalQuantityInput = document.getElementById("add-modal-quantity-input");
+    const addModalContext = document.getElementById("add-modal-context");
+    const addModalSubmitBtn = document.getElementById("add-modal-submit");
+    const addModalCancelBtn = document.getElementById("add-modal-cancel");
+    const closeAddModalBtn = document.getElementById("close-add-modal");
+
     const settingsDrawer = document.getElementById("settings-drawer");
     const drawerBackdrop = document.getElementById("drawer-backdrop");
     const closeSettingsDrawerBtn = document.getElementById("close-settings-drawer");
@@ -1243,24 +1314,121 @@
     const dropIndicator = document.createElement("li");
     dropIndicator.className = "drop-indicator";
 
-    let isSectionFormExpanded = false;
+    let addModalContextState = null;
+    let addModalTrigger = null;
 
-    function setSectionFormExpanded(expanded) {
-      isSectionFormExpanded = expanded;
-      addSectionFormEl?.classList.toggle("collapsed", !expanded);
-      sectionFormToggleBtn?.setAttribute("aria-expanded", expanded.toString());
-      if (expanded) {
-        requestAnimationFrame(() => sectionInputEl?.focus());
+    function closeAddModal() {
+      addModalBackdrop?.classList.remove("active");
+      addModalContextState = null;
+      addModalSectionInput.value = "";
+      addModalItemInput.value = "";
+      addModalQuantityInput.value = "";
+      addModalSectionFields.hidden = true;
+      addModalItemFields.hidden = true;
+      if (addModalTrigger) {
+        addModalTrigger.setAttribute("aria-expanded", "false");
+        addModalTrigger = null;
       }
     }
 
-    setSectionFormExpanded(false);
+    function openAddModal(context) {
+      addModalContextState = context;
+      addModalTrigger = context.trigger ?? null;
+
+      const isSectionMode = context.type === "section";
+      addModalSectionFields.hidden = !isSectionMode;
+      addModalItemFields.hidden = isSectionMode;
+
+      if (isSectionMode) {
+        addModalTitle.textContent = "Add section";
+        addModalDescription.textContent = "Create a new section to organize your items.";
+        addModalSubmitBtn.textContent = "Add section";
+        addModalContext.textContent = "";
+      } else {
+        const sectionName = context.sectionName || "this section";
+        addModalTitle.textContent = "Add item";
+        addModalDescription.textContent = "Drop a new item into your chosen section.";
+        addModalSubmitBtn.textContent = "Add item";
+        addModalContext.textContent = `Adding to ${sectionName}`;
+      }
+
+      addModalBackdrop?.classList.add("active");
+      addModalTrigger?.setAttribute("aria-expanded", "true");
+
+      requestAnimationFrame(() => {
+        if (isSectionMode) {
+          addModalSectionInput?.focus();
+        } else {
+          addModalItemInput?.focus();
+        }
+      });
+    }
+
+    function submitAddModal() {
+      if (!addModalContextState) return;
+
+      if (addModalContextState.type === "section") {
+        const name = addModalSectionInput.value.trim();
+        if (!name) return;
+        addSection(name);
+        closeAddModal();
+        return;
+      }
+
+      const itemName = addModalItemInput.value.trim();
+      if (!itemName) return;
+
+      const quantity = addModalQuantityInput.value.trim();
+      const targetSection = addModalContextState.sectionEl;
+      if (!targetSection) {
+        closeAddModal();
+        return;
+      }
+
+      addItemToSection(targetSection, itemName, quantity, "");
+      closeAddModal();
+    }
+
+    if (addSectionFormEl) {
+      addSectionFormEl.classList.add("collapsed");
+    }
 
     if (sectionFormToggleBtn) {
       sectionFormToggleBtn.addEventListener("click", () => {
-        setSectionFormExpanded(!isSectionFormExpanded);
+        openAddModal({ type: "section", trigger: sectionFormToggleBtn });
       });
     }
+
+    if (addModalForm) {
+      addModalForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        submitAddModal();
+      });
+    }
+
+    if (addModalCancelBtn) {
+      addModalCancelBtn.addEventListener("click", closeAddModal);
+    }
+
+    if (closeAddModalBtn) {
+      closeAddModalBtn.addEventListener("click", closeAddModal);
+    }
+
+    if (addModalBackdrop) {
+      addModalBackdrop.addEventListener("click", (event) => {
+        if (event.target === addModalBackdrop) {
+          closeAddModal();
+        }
+      });
+    }
+
+    closeAddModal();
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && addModalBackdrop?.classList.contains("active")) {
+        closeAddModal();
+      }
+    });
 
     function closeSectionMenu(menu) {
       if (!menu) return;
@@ -2439,21 +2607,13 @@
 
       setCollapsed(collapsed);
 
-      function setItemFormExpanded(expanded) {
-        itemForm?.classList.toggle("collapsed", !expanded);
-        itemFormToggle?.setAttribute("aria-expanded", expanded.toString());
-        if (expanded) {
-          const inputEl = itemForm?.querySelector(".item-input");
-          requestAnimationFrame(() => inputEl?.focus());
-        }
-      }
-
-      setItemFormExpanded(false);
+      itemForm?.classList.add("collapsed");
+      itemFormToggle?.setAttribute("aria-expanded", "false");
 
       if (itemFormToggle) {
-        itemFormToggle.addEventListener("click", () => {
-          const shouldExpand = itemForm?.classList.contains("collapsed");
-          setItemFormExpanded(shouldExpand);
+        itemFormToggle.addEventListener("click", (event) => {
+          event.preventDefault();
+          openAddModal({ type: "item", sectionEl: section, sectionName: name, trigger: itemFormToggle });
         });
       }
 
