@@ -1317,14 +1317,30 @@
     let addModalContextState = null;
     let addModalTrigger = null;
 
+    function setAddModalMode(mode) {
+      const isSectionMode = mode === "section";
+      const isItemMode = mode === "item";
+
+      if (addModalForm) {
+        addModalForm.dataset.mode = mode || "";
+      }
+
+      if (addModalSectionFields) {
+        addModalSectionFields.hidden = !isSectionMode;
+      }
+
+      if (addModalItemFields) {
+        addModalItemFields.hidden = !isItemMode;
+      }
+    }
+
     function closeAddModal() {
       addModalBackdrop?.classList.remove("active");
       addModalContextState = null;
       addModalSectionInput.value = "";
       addModalItemInput.value = "";
       addModalQuantityInput.value = "";
-      addModalSectionFields.hidden = true;
-      addModalItemFields.hidden = true;
+      setAddModalMode(null);
       if (addModalTrigger) {
         addModalTrigger.setAttribute("aria-expanded", "false");
         addModalTrigger = null;
@@ -1336,8 +1352,7 @@
       addModalTrigger = context.trigger ?? null;
 
       const isSectionMode = context.type === "section";
-      addModalSectionFields.hidden = !isSectionMode;
-      addModalItemFields.hidden = isSectionMode;
+      setAddModalMode(isSectionMode ? "section" : "item");
 
       if (isSectionMode) {
         addModalTitle.textContent = "Add section";
